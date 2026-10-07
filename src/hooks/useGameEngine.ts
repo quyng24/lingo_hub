@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
-import { ALL_VOCABULARY, TOPICS } from "@/data/vocabulary";
+import { fetchGameTopics, fetchGameWords, LearningTopic } from "@/lib/learningData";
 import { ActiveWord, Explosion, GameStatePhase2, Word } from "@/types";
 
 const INITIAL_STATE: GameStatePhase2 = {
@@ -26,7 +26,7 @@ const getDynamicSpeed = (level: number) => {
 
 const getSpawnInterval = (level: number) => Math.max(1500, 4500 - (level - 1) * 400);
 
-const generateWordInstance = (word: typeof ALL_VOCABULARY[number], level: number): ActiveWord => ({
+const generateWordInstance = (word: Word, level: number): ActiveWord => ({
     ...word,
     id: `${word.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     x: Math.floor(Math.random() * 70) + 15,
@@ -36,28 +36,56 @@ const generateWordInstance = (word: typeof ALL_VOCABULARY[number], level: number
 
 export const useGameEngineState = () => {
     const [gameState, setGameState] = useState<GameStatePhase2>(INITIAL_STATE);
+    const [topics, setTopics] = useState<LearningTopic[]>([]);
+    const [topicError, setTopicError] = useState<string | null>(null);
+    const [isStarting, setIsStarting] = useState(false);
+    const topicWordsRef = useRef<Word[]>([]);
     const shakeUntilRef = useRef<number>(0);
     const lastMissedWordRef = useRef<Word | null>(null);
 
-    const goToMenu = useCallback(() => {
-        setGameState(INITIAL_STATE)
+    useEffect(() => {
+        let isActive = true;
+        fetchGameTopics()
+            .then((data) => {
+                if (isActive) setTopics(data);
+            })
+            .catch((error: unknown) => {
+                if (isActive) setTopicError(error instanceof Error ? error.message : "Không tải được chủ đề game.");
+            });
+
+        return () => {
+            isActive = false;
+        };
     }, []);
 
-    const startGame = useCallback((topicId: string) => {
+    const goToMenu = useCallback(() => {
+        setGameState(INITIAL_STATE);
+        setTopicError(null);
+    }, []);
+
+    const startGame = useCallback(async (topicId: string) => {
+        setIsStarting(true);
+        setTopicError(null);
         shakeUntilRef.current = 0;
         lastMissedWordRef.current = null;
 
-        const topicWords = TOPICS.find(t => t.id === topicId)?.words || ALL_VOCABULARY;
-        const initialWord = generateWordInstance(
-            topicWords[Math.floor(Math.random() * topicWords.length)], 1
-        );
+        try {
+            const topicWords = await fetchGameWords(topicId);
+            if (topicWords.length === 0) throw new Error("Chủ đề này chưa có từ vựng.");
+            topicWordsRef.current = topicWords;
+            const initialWord = generateWordInstance(topicWords[Math.floor(Math.random() * topicWords.length)], 1);
 
-        setGameState({
-            ...INITIAL_STATE,
-            status: "playing",
-            selectedTopicId: topicId,
-            activeWords: [initialWord],
-        });
+            setGameState({
+                ...INITIAL_STATE,
+                status: "playing",
+                selectedTopicId: topicId,
+                activeWords: [initialWord],
+            });
+        } catch (error) {
+            setTopicError(error instanceof Error ? error.message : "Không bắt đầu được game.");
+        } finally {
+            setIsStarting(false);
+        }
     }, []);
 
     const spawnWord = useCallback(() => {
@@ -65,7 +93,8 @@ export const useGameEngineState = () => {
             if (prev.status !== "playing") return prev;
 
             // Prioritize words that are not already active on screen
-            const topicWords = TOPICS.find(t => t.id === prev.selectedTopicId)?.words || ALL_VOCABULARY;
+            const topicWords = topicWordsRef.current;
+            if (topicWords.length === 0) return prev;
             const activeTexts = new Set(prev.activeWords.map((w) => w.text));
             const availableWords = topicWords.filter((w) => !activeTexts.has(w.text));
             const pool = availableWords.length > 0 ? availableWords : topicWords;
@@ -226,7 +255,7 @@ export const useGameEngineState = () => {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [gameState.status]);
 
-    return { gameState, startGame, goToMenu };
+    return { gameState, topics, topicError, isStarting, startGame, goToMenu };
 };
 
 export type GameEngine = ReturnType<typeof useGameEngineState>;
@@ -240,7 +269,10 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 const DEFAULT_FALLBACK: GameEngine = {
     gameState: INITIAL_STATE,
-    startGame: () => {},
+    topics: [],
+    topicError: null,
+    isStarting: false,
+    startGame: async () => {},
     goToMenu: () => {},
 };
 

@@ -11,6 +11,7 @@ import ProgressBar from "@/components/ProgressBar";
 import WordCard from "@/components/WordCard";
 import { LearningStep, VocabularyDaily } from "@/types";
 import { getDailyWords } from "@/utils/dailyLesson";
+import { useLearningStore } from "@/stores/learningStore";
 
 const steps: { key: LearningStep; label: string; icon: typeof BookOpen }[] = [
   { key: "WORD", label: "Từ vựng", icon: BookOpen },
@@ -20,12 +21,35 @@ const steps: { key: LearningStep; label: string; icon: typeof BookOpen }[] = [
 
 export default function DailyLearnPage() {
   const router = useRouter();
-  const [words] = useState<VocabularyDaily[]>(() => getDailyWords(10));
+  const resetQuiz = useLearningStore((state) => state.resetQuiz);
+  const [words, setWords] = useState<VocabularyDaily[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [wordIndex, setWordIndex] = useState(0);
   const [step, setStep] = useState<LearningStep>("WORD");
   const word = words[wordIndex];
   const stepIndex = steps.findIndex((item) => item.key === step);
   const progress = words.length ? ((wordIndex * steps.length + stepIndex + 1) / (words.length * steps.length)) * 100 : 0;
+
+  useEffect(() => {
+    let isActive = true;
+    getDailyWords(10)
+      .then((dailyWords) => {
+        if (isActive) setWords(dailyWords);
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setLoadError(error instanceof Error ? error.message : "Không tải được bài học.");
+        }
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const next = useCallback(() => {
     if (stepIndex < steps.length - 1) {
@@ -38,8 +62,9 @@ export default function DailyLearnPage() {
       window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
+    resetQuiz();
     router.push("/daily-learn/exercise");
-  }, [router, stepIndex, wordIndex, words.length]);
+  }, [resetQuiz, router, stepIndex, wordIndex, words.length]);
 
   const previous = () => {
     if (stepIndex > 0) {
@@ -61,7 +86,22 @@ export default function DailyLearnPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [next]);
 
-  if (!word) return <Loading message="Đang tải bài học hôm nay..." />;
+  if (isLoading) return <Loading message="Đang tải bài học hôm nay..." />;
+  if (loadError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-6 text-center text-slate-800">
+        <p className="max-w-lg font-semibold">{loadError}</p>
+        <Link href="/" className="font-bold text-indigo-700 hover:text-indigo-900">Về trang chủ</Link>
+      </main>
+    );
+  }
+  if (!word) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-center text-slate-700">
+        Chưa có từ vựng phù hợp cho bài học hôm nay.
+      </main>
+    );
+  }
   const isFinalStep = wordIndex === words.length - 1 && step === "SENTENCE";
 
   return (

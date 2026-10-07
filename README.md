@@ -9,11 +9,11 @@ Mục tiêu cốt lõi (MVP) của dự án là thiết kế một luồng học
 
 ## 📌 Tình trạng dự án (Current Status)
 
-Dự án hiện tại đã hoàn thành **Phase 1** và **Phase 2**, tập trung hoàn thiện toàn bộ luồng học và kiểm tra của module `Daily Learn` với dữ liệu tĩnh (Mock Data).
+Dự án đã hoàn thành luồng học và kiểm tra Daily Learn, đồng thời triển khai tích hợp Supabase cho từ vựng, bài tập và Word Blaster. Cơ sở dữ liệu hiện có 250 từ, 7 chủ đề, 20 câu hỏi và 230 liên kết từ-chủ đề.
 
 ### ✅ Phase 1: Kiến thức đầu vào (Learning Flow)
 
-- Cung cấp bài học hàng ngày với 30-40 từ vựng.
+- Cung cấp bài học hằng ngày; hiện chọn tối đa 10 từ từ 20 từ Daily Learn trong Supabase, ưu tiên từ đến hạn ôn.
 - Áp dụng triết lý học vi mô (Micro-learning) bằng cách tách biệt sự chú ý, học qua 3 bước màn hình:
   1. **WordCard**: Từ vựng, phát âm, loại từ, nghĩa cơ bản.
   2. **PhraseList**: Các cụm từ thường đi kèm (Collocations) với từ vừa học.
@@ -26,6 +26,12 @@ Dự án hiện tại đã hoàn thành **Phase 1** và **Phase 2**, tập trung
 - **Result Dashboard**: Bảng điểm thống kê dạng Retro/ASCII Box tổng hợp số câu đúng, tỷ lệ % (Accuracy), số từ đã học, và số từ cần ôn tập.
 - **Review Mistakes**: Tự động thu thập ID các từ vựng trả lời sai và bắt buộc người dùng học lại (hiển thị lại WordCard) trước khi kết thúc bài học.
 
+### ✅ Phase 3: Supabase, SRS và Game Integration
+
+- Tải từ vựng, bài tập và chủ đề Word Blaster từ Supabase; các file CSV và mock data TypeScript đã được gỡ khỏi runtime.
+- Zustand lưu tiến trình quiz và lịch ôn trong localStorage trên thiết bị hiện tại; đáp án đúng tăng chu kỳ ôn 1, 3, 7, 14, 30 ngày, đáp án sai đặt lại chu kỳ về 1 ngày.
+- Không cần đăng nhập. Tiến trình SRS chưa đồng bộ giữa các thiết bị hoặc trình duyệt.
+
 ---
 
 ## 🛠 Tech Stack
@@ -33,7 +39,8 @@ Dự án hiện tại đã hoàn thành **Phase 1** và **Phase 2**, tập trung
 - **Framework**: Next.js (App Router)
 - **Ngôn ngữ**: TypeScript
 - **Styling**: Tailwind CSS
-- **State Management**: React `useState`, `useEffect` (Dự kiến mở rộng với Zustand trong `stores/learningStore.ts`)
+- **State Management**: Zustand, React hooks
+- **Database**: Supabase (PostgreSQL, public read-only RLS)
 
 ---
 
@@ -60,9 +67,9 @@ Cấu trúc được tối ưu cho Next.js App Router:
 │       ├── PhraseList.tsx
 │       ├── WordCard.tsx
 │       └── ProgressBar.tsx # Thanh tiến trình học
-├── data/
-│   ├── vocabulary.ts       # Mock data từ vựng
-│   └── exercise.ts         # Mock data bài tập ngữ cảnh
+├── lib/
+│   ├── learningData.ts     # Truy vấn và ánh xạ dữ liệu Supabase
+│   └── supabase.ts         # Supabase client
 ├── hooks/
 │   └── useGameEngine.ts    # Custom hook cho Game Hub
 ├── stores/
@@ -70,7 +77,7 @@ Cấu trúc được tối ưu cho Next.js App Router:
 ├── types/
 │   └── index.ts            # Khai báo TypeScript Interfaces (Vocabulary, Exercise)
 └── utils/                  # Hàm hỗ trợ
-    ├── dailyLesson.ts      # Logic lấy 40 từ mỗi ngày
+    ├── dailyLesson.ts      # Chọn từ mới và từ đến hạn ôn
     └── exercise.ts         # Logic chấm điểm, random câu hỏi
 ```
 
@@ -109,17 +116,16 @@ export type ExerciseQuestion = {
 }
 ```
 
-# 🚀 Hướng phát triển tiếp theo (Next Steps / Phase 3)
-
-- **Database & API Integration**: Thay thế thư mục data/ tĩnh bằng việc fetch data từ Backend (Supabase/Firebase/PostgreSQL).
-
-- **Spaced Repetition System**: Thuật toán lặp lại ngắt quãng. Cập nhật utils/dailyLesson.ts để không chỉ lấy từ mới mà còn lấy các từ cần ôn tập (dựa trên lịch sử sai ở Phase 2).
-
-- **Global State Management**: Chuyển logic State phức tạp của app/daily-learn/exercise/page.tsx vào stores/learningStore.ts bằng Zustand để giữ State khi người dùng lỡ chuyển trang.
-
-- **Game Integration**: Sử dụng chung nguồn Data Vocabulary cho game Word Blaster để củng cố kiến thức trực quan hơn.
-
 # 💻 Cách chạy dự án
+
+## Supabase (Phase 3)
+
+1. Tạo một Supabase project.
+2. Mở **SQL Editor**, chạy nội dung trong `supabase/migrations/20261007000000_initial_schema.sql` để tạo schema và chính sách chỉ đọc công khai.
+3. Mở `.env.local` trong thư mục gốc, rồi điền Project URL và publishable key (hoặc legacy anon key) từ **Project Settings → API**.
+4. Khởi động lại dev server sau khi cập nhật `.env.local`.
+
+Không dùng `service_role` key trong ứng dụng hoặc commit key vào Git. Migration tạo schema và chính sách đọc; dữ liệu ban đầu đã được import riêng vào Supabase. Tiến trình quiz/SRS được lưu trong localStorage, không gửi lên database.
 
 Cài đặt dependencies:
 

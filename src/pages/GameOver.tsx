@@ -1,7 +1,6 @@
 "use client";
 
 import { useGameEngine } from "@/hooks/useGameEngine";
-import { TOPICS } from "@/data/vocabulary";
 import {
   Keyboard,
   Play,
@@ -13,7 +12,7 @@ import {
 } from "lucide-react";
 
 export default function GameOver() {
-  const { gameState, startGame, goToMenu } = useGameEngine();
+  const { gameState, topics, topicError, isStarting, startGame, goToMenu } = useGameEngine();
   const { score, status, selectedTopicId } = gameState;
 
   return (
@@ -45,17 +44,22 @@ export default function GameOver() {
             {/* ================= IDLE STATUS (CHỌN TOPIC) ================= */}
             {status === "idle" && (
               <div className="flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar text-left pb-2">
-                {TOPICS.map((topic) => (
+                {topicError && <p className="p-3 text-sm text-rose-300">{topicError}</p>}
+                {!topicError && topics.length === 0 && (
+                  <p className="p-3 text-sm text-slate-400">Đang tải chủ đề từ Supabase...</p>
+                )}
+                {topics.map((topic) => (
                   <button
                     key={topic.id}
+                    disabled={isStarting}
                     onClick={() => startGame(topic.id)}
-                    className="group relative flex items-center gap-4 p-3 rounded-lg border border-slate-700/60 bg-slate-800/40 hover:bg-slate-800 hover:border-cyan-500/60 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] overflow-hidden cursor-pointer shrink-0"
+                    className="group relative flex items-center gap-4 p-3 rounded-lg border border-slate-700/60 bg-slate-800/40 hover:bg-slate-800 hover:border-cyan-500/60 transition-all duration-300 hover:shadow-[0_0_15px_rgba(6,182,212,0.15)] overflow-hidden cursor-pointer shrink-0 disabled:cursor-wait disabled:opacity-60"
                   >
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-cyan-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
                     <div className="w-12 h-12 shrink-0 rounded-md bg-slate-900 border border-slate-700 flex flex-col items-center justify-center group-hover:border-cyan-500/50 group-hover:bg-cyan-950/40 transition-colors">
                       <span className="text-cyan-400 font-mono font-bold text-sm leading-none">
-                        {topic.words.length}
+                        {topic.wordCount}
                       </span>
                       <span className="text-slate-500 text-[9px] uppercase tracking-widest mt-1">
                         Từ
@@ -102,7 +106,7 @@ export default function GameOver() {
                   <div className="text-xs text-slate-400 inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-950/50 border border-slate-800">
                     Chiến dịch:{" "}
                     <span className="text-cyan-400 font-bold uppercase">
-                      {TOPICS.find((t) => t.id === selectedTopicId)?.name}
+                      {topics.find((topic) => topic.id === selectedTopicId)?.name}
                     </span>
                   </div>
                 </div>
@@ -110,7 +114,10 @@ export default function GameOver() {
                 {/* Action Buttons */}
                 <div className="flex flex-col gap-3">
                   <button
-                    onClick={() => startGame(selectedTopicId || TOPICS[0].id)}
+                    onClick={() => {
+                      const topicId = selectedTopicId || topics[0]?.id;
+                      if (topicId) startGame(topicId);
+                    }}
                     className="w-full py-3.5 px-6 rounded-lg bg-linear-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-sm uppercase tracking-widest transition-all duration-200 shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_30px_rgba(6,182,212,0.4)] active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer"
                   >
                     <RotateCcw className="w-5 h-5" />

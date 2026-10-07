@@ -12,55 +12,91 @@ import {
   BookOpen,
   Award,
 } from "lucide-react";
-import { EXERCISE_DATA } from "@/data/exercise";
-import { VOCABULARY_DAILY } from "@/data/vocabulary";
 import WordCard from "@/components/WordCard";
 import ProgressBar from "@/components/ProgressBar";
 import ExerciseCard from "@/components/ExerciseCard";
-
-type Phase = "QUIZ" | "RESULT" | "REVIEW";
+import Loading from "@/components/common/Loading";
+import { fetchExerciseQuestions, fetchVocabularyByIds } from "@/lib/learningData";
+import { useLearningStore } from "@/stores/learningStore";
+import { ExerciseQuestion, VocabularyDaily } from "@/types";
 
 export default function ExercisePage() {
   const router = useRouter();
-  const [phase, setPhase] = useState<Phase>("QUIZ");
+  const phase = useLearningStore((state) => state.quizPhase);
+  const currentIndex = useLearningStore((state) => state.currentIndex);
+  const selectedOption = useLearningStore((state) => state.selectedOption);
+  const isChecked = useLearningStore((state) => state.isChecked);
+  const score = useLearningStore((state) => state.score);
+  const incorrectWordIds = useLearningStore((state) => state.incorrectWordIds);
+  const reviewIndex = useLearningStore((state) => state.reviewIndex);
+  const selectOption = useLearningStore((state) => state.selectOption);
+  const checkAnswer = useLearningStore((state) => state.checkAnswer);
+  const nextQuestion = useLearningStore((state) => state.nextQuestion);
+  const setQuizPhase = useLearningStore((state) => state.setQuizPhase);
+  const setReviewIndex = useLearningStore((state) => state.setReviewIndex);
+  const resetQuiz = useLearningStore((state) => state.resetQuiz);
+  const [questions, setQuestions] = useState<ExerciseQuestion[]>([]);
+  const [reviewWords, setReviewWords] = useState<VocabularyDaily[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isReviewLoading, setIsReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
-  const [isChecked, setIsChecked] = useState(false);
-
-  const [score, setScore] = useState(0);
-  const [incorrectWordIds, setIncorrectWordIds] = useState<string[]>([]);
-  const [reviewIndex, setReviewIndex] = useState(0);
-
-  const questions = EXERCISE_DATA;
   const currentQ = questions[currentIndex];
   const progressPercent = questions.length > 0 ? (currentIndex / questions.length) * 100 : 0;
 
-  const handleCheck = useCallback(() => {
-    if (!selectedOption || isChecked) return;
-    setIsChecked(true);
+  useEffect(() => {
+    let isActive = true;
+    fetchExerciseQuestions()
+      .then((data) => {
+        if (!isActive) return;
+        setQuestions(data);
+        if (data.length > 0 && useLearningStore.getState().currentIndex >= data.length) resetQuiz();
+      })
+      .catch((error: unknown) => {
+        if (isActive) setLoadError(error instanceof Error ? error.message : "Không tải được bài tập.");
+      })
+      .finally(() => {
+        if (isActive) setIsLoading(false);
+      });
 
-    if (selectedOption === currentQ.correctAnswer) {
-      setScore((prev) => prev + 1);
-    } else {
-      if (!incorrectWordIds.includes(currentQ.wordId)) {
-        setIncorrectWordIds((prev) => [...prev, currentQ.wordId]);
-      }
-    }
-  }, [selectedOption, isChecked, currentQ, incorrectWordIds]);
+    return () => {
+      isActive = false;
+    };
+  }, [resetQuiz]);
+
+  useEffect(() => {
+    if (phase !== "REVIEW" || incorrectWordIds.length === 0) return;
+    let isActive = true;
+    fetchVocabularyByIds(incorrectWordIds)
+      .then((words) => {
+        if (isActive) setReviewWords(words);
+      })
+      .catch((error: unknown) => {
+        if (isActive) setReviewError(error instanceof Error ? error.message : "Không tải được từ ôn tập.");
+      })
+      .finally(() => {
+        if (isActive) setIsReviewLoading(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [incorrectWordIds, phase]);
+
+  const handleCheck = useCallback(() => {
+    if (!selectedOption || isChecked || !currentQ) return;
+    checkAnswer(currentQ.wordId, selectedOption === currentQ.correctAnswer);
+  }, [selectedOption, isChecked, currentQ, checkAnswer]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOption(null);
-      setIsChecked(false);
+    if (questions.length > 0) {
+      nextQuestion(currentIndex >= questions.length - 1);
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
-    } else {
-      setPhase("RESULT");
     }
-  }, [currentIndex, questions.length]);
+  }, [currentIndex, nextQuestion, questions.length]);
 
   // Keyboard shortcut: Press Enter to check or go next
   useEffect(() => {
@@ -78,6 +114,19 @@ export default function ExercisePage() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, isChecked, selectedOption, handleCheck, handleNext]);
+
+  if (isLoading) return <Loading message="Đang tải bài tập..." />;
+  if (loadError) {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center text-slate-800">
+        <p className="max-w-lg font-semibold">{loadError}</p>
+        <Link href="/daily-learn/learn" className="font-bold text-indigo-700">Quay lại bài học</Link>
+      </main>
+    );
+  }
+  if (!currentQ) {
+    return <main className="flex min-h-screen items-center justify-center p-6 text-center">Chưa có câu hỏi trong Supabase.</main>;
+  }
 
 
   if (phase === "QUIZ") {
@@ -120,7 +169,7 @@ export default function ExercisePage() {
               question={currentQ}
               selectedOption={selectedOption}
               isChecked={isChecked}
-              onSelectOption={setSelectedOption}
+              onSelectOption={selectOption}
             />
           </div>
         </main>
@@ -240,7 +289,12 @@ export default function ExercisePage() {
             {hasMistakes ? (
               <button
                 type="button"
-                onClick={() => setPhase("REVIEW")}
+                onClick={() => {
+                  setReviewWords([]);
+                  setIsReviewLoading(true);
+                  setReviewError(null);
+                  setQuizPhase("REVIEW");
+                }}
                 className="flex-1 py-5 px-4 bg-zinc-900 text-white hover:bg-zinc-800 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3 transition-colors cursor-pointer group"
               >
                 <RotateCcw className="w-5 h-5 group-hover:-rotate-90 transition-transform duration-300" />
@@ -248,17 +302,16 @@ export default function ExercisePage() {
               </button>
             ) : null}
 
-            <button
-              type="button"
-              onClick={() => router.push("/")}
-              className={`flex-1 py-5 px-4 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3 transition-colors cursor-pointer ${hasMistakes
-                ? "bg-white text-zinc-900 hover:bg-zinc-100" // Nút phụ nếu có lỗi sai
-                : "bg-emerald-500 text-zinc-950 hover:bg-emerald-400" // Nút chính nếu đã hoàn hảo
-                }`}
-            >
-              <Home className="w-5 h-5" />
-              <span>Về Trang Chủ</span>
-            </button>
+            {!hasMistakes && (
+              <button
+                type="button"
+                onClick={() => router.push("/")}
+                className="flex-1 py-5 px-4 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3 transition-colors cursor-pointer bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
+              >
+                <Home className="w-5 h-5" />
+                <span>Về Trang Chủ</span>
+              </button>
+            )}
           </div>
 
         </div>
@@ -270,15 +323,12 @@ export default function ExercisePage() {
    * 3. PHASE REVIEW: Ôn tập lại từ vựng làm sai
    * -------------------------------------------------------- */
   if (phase === "REVIEW") {
-    const reviewWords = VOCABULARY_DAILY.filter((w) =>
-      incorrectWordIds.includes(w.id),
-    );
     const currentReviewWord = reviewWords[reviewIndex] || reviewWords[0];
     const totalReview = reviewWords.length;
 
     const handleNextReview = () => {
       if (reviewIndex < totalReview - 1) {
-        setReviewIndex((prev) => prev + 1);
+        setReviewIndex(reviewIndex + 1);
         if (typeof window !== "undefined") {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -294,7 +344,7 @@ export default function ExercisePage() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
             <button
               type="button"
-              onClick={() => setPhase("RESULT")}
+              onClick={() => setQuizPhase("RESULT")}
               className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200/80 px-3 py-2 rounded-lg transition-all cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -317,7 +367,14 @@ export default function ExercisePage() {
         </header>
 
         {/* Review Content: Uses full-screen expansive WordCard */}
-        <main className="flex-1 flex items-stretch justify-center p-0 sm:items-center sm:p-5 md:p-8">
+        {isReviewLoading ? (
+          <Loading message="Đang tải từ cần ôn..." />
+        ) : reviewError ? (
+          <main className="flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center">
+            <p>{reviewError}</p>
+            <button type="button" onClick={() => setQuizPhase("RESULT")} className="font-bold text-indigo-700">Quay lại kết quả</button>
+          </main>
+        ) : <main className="flex-1 flex items-stretch justify-center p-0 sm:items-center sm:p-5 md:p-8">
           <div className="w-full max-w-6xl mx-auto">
             <div className="mb-4 text-center">
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-rose-50 text-rose-700 text-xs font-bold border border-rose-100">
@@ -328,7 +385,7 @@ export default function ExercisePage() {
 
             {currentReviewWord && <WordCard vocabulary={currentReviewWord} />}
           </div>
-        </main>
+        </main>}
 
         {/* Bottom Review Action */}
         <footer className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-3 sm:p-4">
