@@ -1,5 +1,6 @@
 import { GameProvider } from "@/hooks/useGameEngine";
 import WordBlaster from "@/pages/WordBlaster";
+import RequireAuth from "@/components/RequireAuth";
 import { headers } from "next/headers";
 import { ArrowLeft, Monitor } from "lucide-react";
 import Link from "next/link";
@@ -14,6 +15,7 @@ export default async function Game() {
 
   if (isMobile) {
     return (
+      <RequireAuth>
       <div className="flex md:hidden min-h-screen bg-slate-950 flex-col items-center justify-center text-center p-8 z-50 fixed inset-0">
         <div className="w-24 h-24 mb-6 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shadow-[0_0_30px_rgba(244,63,94,0.2)]">
           <Monitor className="w-12 h-12 text-rose-500 animate-pulse" />
@@ -27,17 +29,20 @@ export default async function Game() {
           ngón. Vui lòng mở trang web trên PC/Laptop để chơi.
         </p>
         <Link
-          href="/"
+          href="/dashboard"
           className="flex items-center gap-2 px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-full transition-colors font-bold"
         >
-          <ArrowLeft className="w-5 h-5" /> Quay lại trang chủ
+          <ArrowLeft className="w-5 h-5" /> Bảng điều khiển
         </Link>
       </div>
+      </RequireAuth>
     );
   }
   return (
-    <GameProvider>
-      <WordBlaster />
-    </GameProvider>
+    <RequireAuth>
+      <GameProvider>
+        <WordBlaster />
+      </GameProvider>
+    </RequireAuth>
   );
 }

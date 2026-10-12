@@ -10,8 +10,9 @@ import PhraseList from "@/components/PhraseList";
 import ProgressBar from "@/components/ProgressBar";
 import WordCard from "@/components/WordCard";
 import { LearningStep, VocabularyDaily } from "@/types";
-import { getDailyWords } from "@/utils/dailyLesson";
+import { DAILY_WORD_COUNT, getDailyWords } from "@/utils/dailyLesson";
 import { useLearningStore } from "@/stores/learningStore";
+import { useAuth } from "@/components/AuthProvider";
 
 const steps: { key: LearningStep; label: string; icon: typeof BookOpen }[] = [
   { key: "WORD", label: "Từ vựng", icon: BookOpen },
@@ -21,6 +22,7 @@ const steps: { key: LearningStep; label: string; icon: typeof BookOpen }[] = [
 
 export default function DailyLearnPage() {
   const router = useRouter();
+  const { isProgressReady, progressError } = useAuth();
   const resetQuiz = useLearningStore((state) => state.resetQuiz);
   const [words, setWords] = useState<VocabularyDaily[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -32,8 +34,9 @@ export default function DailyLearnPage() {
   const progress = words.length ? ((wordIndex * steps.length + stepIndex + 1) / (words.length * steps.length)) * 100 : 0;
 
   useEffect(() => {
+    if (!isProgressReady) return;
     let isActive = true;
-    getDailyWords(10)
+    getDailyWords(DAILY_WORD_COUNT)
       .then((dailyWords) => {
         if (isActive) setWords(dailyWords);
       })
@@ -49,7 +52,7 @@ export default function DailyLearnPage() {
     return () => {
       isActive = false;
     };
-  }, []);
+  }, [isProgressReady]);
 
   const next = useCallback(() => {
     if (stepIndex < steps.length - 1) {
@@ -86,12 +89,12 @@ export default function DailyLearnPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [next]);
 
-  if (isLoading) return <Loading message="Đang tải bài học hôm nay..." />;
+  if (isLoading || !isProgressReady) return <Loading message="Đang tải bài học hôm nay..." />;
   if (loadError) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-slate-50 p-6 text-center text-slate-800">
         <p className="max-w-lg font-semibold">{loadError}</p>
-        <Link href="/" className="font-bold text-indigo-700 hover:text-indigo-900">Về trang chủ</Link>
+        <Link href="/dashboard" className="font-bold text-indigo-700 hover:text-indigo-900">Về bảng điều khiển</Link>
       </main>
     );
   }
@@ -108,7 +111,7 @@ export default function DailyLearnPage() {
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-950"><ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Trang chủ</span></Link>
+          <Link href="/dashboard" className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-950"><ArrowLeft className="w-4 h-4" /> <span className="hidden sm:inline">Bảng điều khiển</span></Link>
           <div className="flex items-center gap-1 sm:gap-2">
             {steps.map((item, index) => {
               const Icon = item.icon;
@@ -119,6 +122,7 @@ export default function DailyLearnPage() {
         </div>
         <div className="mx-auto max-w-5xl px-4 pb-1 sm:px-6"><ProgressBar progress={progress} height="h-1.5" /></div>
       </header>
+      {progressError && <p role="status" className="mx-auto max-w-5xl px-4 pt-3 text-sm text-amber-800">Chưa đồng bộ được lịch ôn: {progressError}</p>}
       <main className="mx-auto flex min-h-[calc(100dvh-145px)] max-w-5xl items-stretch px-0 py-0 sm:items-center sm:px-6 sm:py-8">
         {step === "WORD" && <WordCard vocabulary={word} />}
         {step === "PHRASE" && <PhraseList vocabulary={word} />}

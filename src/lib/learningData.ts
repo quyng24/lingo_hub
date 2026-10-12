@@ -76,11 +76,15 @@ export async function fetchVocabularyByIds(ids: string[]): Promise<VocabularyDai
   });
 }
 
-export async function fetchExerciseQuestions(): Promise<ExerciseQuestion[]> {
-  const { data, error } = await clientOrThrow()
+export async function fetchExerciseQuestions(wordIds?: string[]): Promise<ExerciseQuestion[]> {
+  if (wordIds && wordIds.length === 0) return [];
+
+  const client = clientOrThrow();
+  let query = client
     .from("exercise_questions")
-    .select("id,word_id,context,sentence,options,correct_answer,sort_order")
-    .order("sort_order");
+    .select("id,word_id,context,sentence,options,correct_answer,sort_order");
+  if (wordIds) query = query.in("word_id", wordIds);
+  const { data, error } = await query.order("sort_order");
 
   if (error) throw new Error(`Không tải được bài tập: ${error.message}`);
   return (data ?? []).map((row) => ({

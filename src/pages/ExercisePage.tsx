@@ -19,9 +19,13 @@ import Loading from "@/components/common/Loading";
 import { fetchExerciseQuestions, fetchVocabularyByIds } from "@/lib/learningData";
 import { useLearningStore } from "@/stores/learningStore";
 import { ExerciseQuestion, VocabularyDaily } from "@/types";
+import { useAuth } from "@/components/AuthProvider";
+import { saveUserLearningProgress } from "@/lib/learningProgress";
+import { DAILY_WORD_COUNT, getDailyWords } from "@/utils/dailyLesson";
 
 export default function ExercisePage() {
   const router = useRouter();
+  const { user, isProgressReady, progressError } = useAuth();
   const phase = useLearningStore((state) => state.quizPhase);
   const currentIndex = useLearningStore((state) => state.currentIndex);
   const selectedOption = useLearningStore((state) => state.selectedOption);
@@ -41,13 +45,15 @@ export default function ExercisePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isReviewLoading, setIsReviewLoading] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [progressSaveError, setProgressSaveError] = useState<string | null>(null);
 
   const currentQ = questions[currentIndex];
   const progressPercent = questions.length > 0 ? (currentIndex / questions.length) * 100 : 0;
 
   useEffect(() => {
     let isActive = true;
-    fetchExerciseQuestions()
+    getDailyWords(DAILY_WORD_COUNT)
+      .then((dailyWords) => fetchExerciseQuestions(dailyWords.map((word) => word.id)))
       .then((data) => {
         if (!isActive) return;
         setQuestions(data);
@@ -84,10 +90,19 @@ export default function ExercisePage() {
     };
   }, [incorrectWordIds, phase]);
 
-  const handleCheck = useCallback(() => {
+  const handleCheck = useCallback(async () => {
     if (!selectedOption || isChecked || !currentQ) return;
     checkAnswer(currentQ.wordId, selectedOption === currentQ.correctAnswer);
-  }, [selectedOption, isChecked, currentQ, checkAnswer]);
+    if (!user) return;
+
+    const record = useLearningStore.getState().reviewSchedule[currentQ.wordId];
+    try {
+      await saveUserLearningProgress(user.id, currentQ.wordId, record);
+      setProgressSaveError(null);
+    } catch (error) {
+      setProgressSaveError(error instanceof Error ? error.message : "Không lưu được tiến trình.");
+    }
+  }, [selectedOption, isChecked, currentQ, checkAnswer, user]);
 
   const handleNext = useCallback(() => {
     if (questions.length > 0) {
@@ -115,7 +130,7 @@ export default function ExercisePage() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [phase, isChecked, selectedOption, handleCheck, handleNext]);
 
-  if (isLoading) return <Loading message="Đang tải bài tập..." />;
+  if (isLoading || !isProgressReady) return <Loading message="Đang tải bài tập..." />;
   if (loadError) {
     return (
       <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center text-slate-800">
@@ -160,6 +175,7 @@ export default function ExercisePage() {
           <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-1">
             <ProgressBar progress={progressPercent} height="h-1.5" />
           </div>
+          {(progressError || progressSaveError) && <p role="status" className="mx-auto max-w-5xl px-4 py-2 text-sm text-amber-800">{progressSaveError ?? `Chưa tải được lịch ôn: ${progressError}`}</p>}
         </header>
 
         {/* Quiz Body: Expands across max-w-5xl */}
@@ -176,7 +192,8 @@ export default function ExercisePage() {
 
         {/* Bottom Action Bar */}
         <footer className="sticky bottom-0 z-30 bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-3 sm:p-4">
-          <div className="max-w-5xl mx-auto flex items-center justify-end">
+          <div className="max-w-5xl mx-auto flex flex-col items-center justify-end gap-2 sm:flex-row">
+            {!user && <Link href="/auth" className="text-xs font-semibold text-indigo-700 hover:text-indigo-900">Đăng nhập để lưu tiến trình trên nhiều thiết bị</Link>}
             {!isChecked ? (
               <button
                 type="button"
@@ -305,7 +322,7 @@ export default function ExercisePage() {
             {!hasMistakes && (
               <button
                 type="button"
-                onClick={() => router.push("/")}
+                onClick={() => router.push("/dashboard")}
                 className="flex-1 py-5 px-4 font-bold uppercase tracking-wider text-sm flex items-center justify-center gap-3 transition-colors cursor-pointer bg-emerald-500 text-zinc-950 hover:bg-emerald-400"
               >
                 <Home className="w-5 h-5" />
@@ -333,7 +350,7 @@ export default function ExercisePage() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }
       } else {
-        router.push("/");
+        router.push("/dashboard");
       }
     };
 

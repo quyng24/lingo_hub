@@ -1,4 +1,5 @@
 import Link from "next/link";
+import RequireAuth from "@/components/RequireAuth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -23,14 +24,14 @@ const upcomingGames = [
   },
 ];
 
-export default function GameIndexPage() {
+function GameLibraryPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-300 selection:bg-cyan-500/30">
       <header className="border-b border-zinc-800 bg-zinc-950/85 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-5 sm:px-6 py-4 flex items-center justify-between">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm font-semibold text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" />
-            Trang chủ
+            Bảng điều khiển
           </Link>
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400">
             <Gamepad2 className="w-4 h-4" /> Game library
@@ -106,4 +107,8 @@ export default function GameIndexPage() {
       </section>
     </main>
   );
+}
+
+export default function GameIndexPage() {
+  return <RequireAuth><GameLibraryPage /></RequireAuth>;
 }

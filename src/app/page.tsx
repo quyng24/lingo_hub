@@ -10,7 +10,10 @@ import {
   Swords,
   Globe,
 } from "lucide-react";
-export default function LingoHubLanding() {
+import AccountControl from "@/components/AccountControl";
+import RedirectSignedInHome from "@/components/RedirectSignedInHome";
+
+function LandingContent() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-emerald-500/30">
       {/* 🚀 NAVIGATION */}
@@ -50,6 +53,7 @@ export default function LingoHubLanding() {
               Vào Game
             </Link>
           </div>
+          <AccountControl />
         </div>
       </nav>
       {/* 🎯 HERO SECTION */}
@@ -297,4 +301,8 @@ export default function LingoHubLanding() {
       </footer>
     </main>
   );
+}
+
+export default function LingoHubLanding() {
+  return <RedirectSignedInHome><LandingContent /></RedirectSignedInHome>;
 }
