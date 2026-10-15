@@ -1,4 +1,4 @@
-# 🚀 English Learning App: Daily Learn & Game Hub
+# 🚀 LINGOHUB: Daily Learn & Game Hub
 
 Dự án này là một nền tảng học tiếng Anh kết hợp giữa **Học tập mỗi ngày (Daily Learn)** và **Giải trí (Game Hub)**.
 
