@@ -16,11 +16,11 @@ import WordCard from "@/components/WordCard";
 import ProgressBar from "@/components/ProgressBar";
 import ExerciseCard from "@/components/ExerciseCard";
 import Loading from "@/components/common/Loading";
-import { fetchExerciseQuestions, fetchVocabularyByIds } from "@/lib/learningData";
+import { learningService } from "@/services/learningService";
 import { useLearningStore } from "@/stores/learningStore";
 import { ExerciseQuestion, VocabularyDaily } from "@/types";
 import { useAuth } from "@/components/AuthProvider";
-import { saveUserLearningProgress } from "@/lib/learningProgress";
+import { learningProgressService } from "@/services/learningProgressService";
 import { DAILY_WORD_COUNT, getDailyWords } from "@/utils/dailyLesson";
 
 export default function ExercisePage() {
@@ -53,7 +53,7 @@ export default function ExercisePage() {
   useEffect(() => {
     let isActive = true;
     getDailyWords(DAILY_WORD_COUNT)
-      .then((dailyWords) => fetchExerciseQuestions(dailyWords.map((word) => word.id)))
+      .then((dailyWords) => learningService.fetchExerciseQuestions(dailyWords.map((word) => word.id)))
       .then((data) => {
         if (!isActive) return;
         setQuestions(data);
@@ -74,7 +74,7 @@ export default function ExercisePage() {
   useEffect(() => {
     if (phase !== "REVIEW" || incorrectWordIds.length === 0) return;
     let isActive = true;
-    fetchVocabularyByIds(incorrectWordIds)
+    learningService.fetchVocabularyByIds(incorrectWordIds)
       .then((words) => {
         if (isActive) setReviewWords(words);
       })
@@ -97,7 +97,7 @@ export default function ExercisePage() {
 
     const record = useLearningStore.getState().reviewSchedule[currentQ.wordId];
     try {
-      await saveUserLearningProgress(user.id, currentQ.wordId, record);
+      await learningProgressService.saveForUser(user.id, currentQ.wordId, record);
       setProgressSaveError(null);
     } catch (error) {
       setProgressSaveError(error instanceof Error ? error.message : "Không lưu được tiến trình.");

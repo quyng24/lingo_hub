@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
-import { fetchGameTopics, fetchGameWords, LearningTopic } from "@/lib/learningData";
+import { learningService, type LearningTopic } from "@/services/learningService";
 import { ActiveWord, Explosion, GameStatePhase2, Word } from "@/types";
 
 const INITIAL_STATE: GameStatePhase2 = {
@@ -45,7 +45,7 @@ export const useGameEngineState = () => {
 
     useEffect(() => {
         let isActive = true;
-        fetchGameTopics()
+        learningService.fetchGameTopics()
             .then((data) => {
                 if (isActive) setTopics(data);
             })
@@ -70,7 +70,7 @@ export const useGameEngineState = () => {
         lastMissedWordRef.current = null;
 
         try {
-            const topicWords = await fetchGameWords(topicId);
+            const topicWords = await learningService.fetchGameWords(topicId);
             if (topicWords.length === 0) throw new Error("Chủ đề này chưa có từ vựng.");
             topicWordsRef.current = topicWords;
             const initialWord = generateWordInstance(topicWords[Math.floor(Math.random() * topicWords.length)], 1);

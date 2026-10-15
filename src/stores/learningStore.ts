@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { ReviewRecord } from "@/lib/learningProgress";
+import type { ReviewRecord } from "@/services/learningProgressService";
 
 type QuizPhase = "QUIZ" | "RESULT" | "REVIEW";
 

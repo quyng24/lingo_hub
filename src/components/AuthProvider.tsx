@@ -2,8 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { fetchUserLearningProgress } from "@/lib/learningProgress";
-import { getSupabaseClient } from "@/lib/supabase";
+import { authService } from "@/services/authService";
+import { learningProgressService } from "@/services/learningProgressService";
 import { useLearningStore } from "@/stores/learningStore";
 
 type AuthContextValue = {
@@ -26,18 +26,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setReviewSchedule = useLearningStore((state) => state.setReviewSchedule);
 
   useEffect(() => {
-    const client = getSupabaseClient();
-    if (!client) {
+    if (!authService.isConfigured) {
       queueMicrotask(() => setIsAuthReady(true));
       return;
     }
 
     let isActive = true;
-    const { data: { subscription } } = client.auth.onAuthStateChange((_event, nextSession) => {
+    const subscription = authService.onAuthStateChange((nextSession) => {
       if (isActive) setSession(nextSession);
     });
 
-    client.auth.getSession().then(({ data, error }) => {
+    authService.getSession().then(({ data, error }) => {
       if (!isActive) return;
       if (error) setProgressError(error.message);
       setSession(data.session);
@@ -60,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isActive) return {};
         useLearningStore.getState().resetQuiz();
         setReviewSchedule({});
-        return userId ? fetchUserLearningProgress(userId) : {};
+        return userId ? learningProgressService.fetchForUser(userId) : {};
       })
       .then((schedule) => {
         if (!isActive) return;

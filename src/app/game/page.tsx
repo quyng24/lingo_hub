@@ -1,5 +1,4 @@
 import Link from "next/link";
-import RequireAuth from "@/components/RequireAuth";
 import {
   ArrowLeft,
   ArrowRight,
@@ -109,6 +108,4 @@ function GameLibraryPage() {
   );
 }
 
-export default function GameIndexPage() {
-  return <RequireAuth><GameLibraryPage /></RequireAuth>;
-}
+export default GameLibraryPage;

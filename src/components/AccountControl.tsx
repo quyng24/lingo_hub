@@ -2,24 +2,21 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { LogOut } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
-import { getSupabaseClient } from "@/lib/supabase";
+import { authService } from "@/services/authService";
 
 export default function AccountControl() {
   const { user } = useAuth();
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-
   async function signOut() {
-    const client = getSupabaseClient();
-    if (!client) return;
-    const { error: signOutError } = await client.auth.signOut();
+    const { error: signOutError } = await authService.signOut();
     if (signOutError) {
-      setError(signOutError.message);
+      toast.error(signOutError.message);
       return;
     }
+    toast.success("Đăng xuất thành công.");
     router.refresh();
   }
 
@@ -38,7 +35,6 @@ export default function AccountControl() {
       <button type="button" onClick={signOut} title="Đăng xuất" className="inline-flex items-center gap-2 border border-zinc-700 px-3 py-2 text-xs font-bold text-zinc-300 hover:border-rose-400 hover:text-rose-300">
         <LogOut className="h-4 w-4" /> <span className="hidden sm:inline">Đăng xuất</span>
       </button>
-      {error && <span role="alert" className="sr-only">{error}</span>}
     </div>
   );
 }

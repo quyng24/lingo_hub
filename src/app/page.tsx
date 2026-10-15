@@ -11,9 +11,8 @@ import {
   Globe,
 } from "lucide-react";
 import AccountControl from "@/components/AccountControl";
-import RedirectSignedInHome from "@/components/RedirectSignedInHome";
 
-function LandingContent() {
+export default function LingoHubLanding() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-300 font-sans selection:bg-emerald-500/30">
       {/* 🚀 NAVIGATION */}
@@ -301,8 +300,4 @@ function LandingContent() {
       </footer>
     </main>
   );
-}
-
-export default function LingoHubLanding() {
-  return <RedirectSignedInHome><LandingContent /></RedirectSignedInHome>;
 }

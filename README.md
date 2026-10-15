@@ -36,6 +36,7 @@ Dự án đã hoàn thành luồng học và kiểm tra Daily Learn, đồng th�
 - Supabase Auth dùng Email/Password; OAuth có thể bổ sung sau.
 - Sau khi đăng nhập, người dùng được chuyển tới dashboard riêng với tổng số từ đã học, đếm từ bảng `user_learning_progress`.
 - Daily Learn và các trang game yêu cầu đăng nhập; bài tập chỉ lấy câu hỏi của 10 từ trong bài học hiện tại. RLS chỉ cho phép tài khoản đọc/ghi tiến trình của chính mình.
+- Next.js 16 Proxy kiểm tra session Supabase trong cookie trước khi render route; auth client dùng `@supabase/ssr` để đồng bộ cookie giữa browser và server, tránh client-side redirect gây nháy trang.
 
 ---
 
@@ -54,6 +55,7 @@ Dự án đã hoàn thành luồng học và kiểm tra Daily Learn, đồng th�
 Cấu trúc được tối ưu cho Next.js App Router:
 
 ```text
+├── proxy.ts              # Xác thực route server-side trước khi render
 ├── app/
 │   ├── daily-learn/
 │   │   ├── exercise/       # Giao diện bài tập, tính điểm, ôn tập (Phase 2)
@@ -72,9 +74,11 @@ Cấu trúc được tối ưu cho Next.js App Router:
 │       ├── PhraseList.tsx
 │       ├── WordCard.tsx
 │       └── ProgressBar.tsx # Thanh tiến trình học
-├── lib/
-│   ├── learningData.ts     # Truy vấn và ánh xạ dữ liệu Supabase
-│   └── supabase.ts         # Supabase client
+├── services/
+│   ├── apiClient.ts              # Khởi tạo Supabase client và chuẩn hóa lỗi API
+│   ├── authService.ts            # Đăng nhập, đăng ký, đăng xuất, session
+│   ├── learningService.ts        # Từ vựng, bài tập và dữ liệu game
+│   └── learningProgressService.ts # Đọc/ghi tiến trình theo user
 ├── hooks/
 │   └── useGameEngine.ts    # Custom hook cho Game Hub
 ├── stores/
@@ -131,6 +135,7 @@ export type ExerciseQuestion = {
 4. Trong **Authentication → Providers**, bật Email và cấu hình Google/GitHub. Tạo OAuth app tương ứng ở Google Cloud Console và GitHub Developer Settings, điền Client ID/Secret ở Supabase, đồng thời khai báo callback URI của Supabase (dạng `https://<project-ref>.supabase.co/auth/v1/callback`) trong OAuth app; không đặt các secret OAuth trong frontend.
 5. Trong **Authentication → URL Configuration**, đặt Site URL của ứng dụng và thêm Redirect URLs `http://localhost:3000/auth` cùng URL `/auth` trên domain triển khai.
 6. Khởi động lại dev server sau khi cập nhật `.env.local`.
+7. Trong Supabase **Authentication → Rate Limits**, giữ/bật giới hạn mặc định hoặc đặt ngưỡng phù hợp cho endpoint Auth. Cooldown trong form chỉ là lớp UX phía trình duyệt; giới hạn Supabase mới bảo vệ được request trực tiếp và theo IP.
 
 Không dùng `service_role` key trong ứng dụng hoặc commit key vào Git. Dữ liệu học liệu vẫn được đọc công khai; bảng tiến trình chỉ cấp quyền cho `authenticated` và RLS kiểm tra `auth.uid() = user_id`. Lịch tiến trình cũ trong localStorage không được tự nhập vào tài khoản vì không thể xác định chủ sở hữu một cách an toàn.
 

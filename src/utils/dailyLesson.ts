@@ -1,11 +1,11 @@
 import { VocabularyDaily } from "@/types";
-import { fetchDailyVocabulary } from "@/lib/learningData";
+import { learningService } from "@/services/learningService";
 import { useLearningStore } from "@/stores/learningStore";
 
 export const DAILY_WORD_COUNT = 10;
 
 export async function getDailyWords(count: number = DAILY_WORD_COUNT): Promise<VocabularyDaily[]> {
-    const vocabulary = await fetchDailyVocabulary();
+    const vocabulary = await learningService.fetchDailyVocabulary();
     const schedule = useLearningStore.getState().reviewSchedule;
     const now = Date.now();
     const due = vocabulary.filter((word) => {

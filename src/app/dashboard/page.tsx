@@ -4,9 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight, BookOpen, Gamepad2 } from "lucide-react";
 import AccountControl from "@/components/AccountControl";
-import RequireAuth from "@/components/RequireAuth";
 import { useAuth } from "@/components/AuthProvider";
-import { fetchLearnedWordCount } from "@/lib/learningProgress";
+import { learningProgressService } from "@/services/learningProgressService";
 
 function DashboardContent() {
   const { user, isProgressReady } = useAuth();
@@ -17,7 +16,7 @@ function DashboardContent() {
     if (!user || !isProgressReady) return;
     let isActive = true;
 
-    fetchLearnedWordCount(user.id)
+    learningProgressService.countLearnedWords(user.id)
       .then((count) => {
         if (isActive) setLearnedWordCount(count);
       })
@@ -32,9 +31,9 @@ function DashboardContent() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100">
-      <header className="border-b border-zinc-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4 sm:px-8">
-          <Link href="/dashboard" className="text-sm font-black uppercase tracking-widest text-white">
+      <header className="sticky top-0 z-50 border-b border-white/5 bg-[#0A0A0A]/80 px-6 py-4 backdrop-blur-md sm:px-12">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
+          <Link href="/dashboard" className="text-base font-semibold tracking-tight text-white">
             Lingo<span className="text-emerald-400">Hub</span>
           </Link>
           <AccountControl />
@@ -42,20 +41,27 @@ function DashboardContent() {
       </header>
 
       <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16">
-        <p className="text-xs font-mono font-bold uppercase tracking-[0.2em] text-emerald-400">Bảng điều khiển</p>
-        <h1 className="mt-3 text-3xl font-black sm:text-4xl">Chào mừng trở lại</h1>
-        <p className="mt-2 text-sm text-zinc-400">{user?.email}</p>
+        <div className="flex flex-col gap-10 md:flex-row md:items-end md:justify-between pb-16 border-b border-white/5">
+          <div>
+            <p className="text-sm font-medium text-zinc-500 mb-3">{user?.email}</p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-medium tracking-tight text-white leading-tight">
+              Sẵn sàng để <br className="hidden md:block" />
+              <span className="text-zinc-400">tiếp tục học?</span>
+            </h1>
+          </div>
 
-        <section aria-label="Tiến trình học" className="mt-10 border-y border-zinc-800 py-6">
-          <p className="text-sm font-semibold text-zinc-400">Số từ đã học</p>
-          {error ? (
-            <p role="alert" className="mt-2 text-sm text-rose-300">{error}</p>
-          ) : (
-            <p className="mt-2 text-5xl font-black tabular-nums text-emerald-300">
-              {learnedWordCount === null ? "..." : learnedWordCount}
-            </p>
-          )}
-        </section>
+          <div className="md:text-right">
+            <p className="text-sm font-medium text-zinc-500 mb-3 uppercase tracking-widest">Vốn từ vựng</p>
+            {error ? (
+              <p role="alert" className="text-sm text-rose-400/80">{error}</p>
+            ) : (
+              <p className="text-6xl sm:text-7xl font-light tracking-tighter text-emerald-400">
+                {learnedWordCount === null ? "—" : learnedWordCount}
+                <span className="ml-2 text-2xl font-normal tracking-normal text-zinc-600">từ</span>
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className="mt-10">
           <p className="text-xs font-mono font-bold uppercase tracking-[0.18em] text-zinc-500">Bắt đầu</p>
@@ -90,5 +96,5 @@ function DashboardContent() {
 }
 
 export default function DashboardPage() {
-  return <RequireAuth><DashboardContent /></RequireAuth>;
+  return <DashboardContent />;
 }
