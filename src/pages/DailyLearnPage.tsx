@@ -22,7 +22,7 @@ const steps: { key: LearningStep; label: string; icon: typeof BookOpen }[] = [
 
 export default function DailyLearnPage() {
   const router = useRouter();
-  const { isProgressReady, progressError } = useAuth();
+  const { user, isProgressReady, progressError } = useAuth();
   const resetQuiz = useLearningStore((state) => state.resetQuiz);
   const [words, setWords] = useState<VocabularyDaily[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,9 +34,9 @@ export default function DailyLearnPage() {
   const progress = words.length ? ((wordIndex * steps.length + stepIndex + 1) / (words.length * steps.length)) * 100 : 0;
 
   useEffect(() => {
-    if (!isProgressReady) return;
+    if (!isProgressReady || !user) return;
     let isActive = true;
-    getDailyWords(DAILY_WORD_COUNT)
+    getDailyWords(user.id, DAILY_WORD_COUNT)
       .then((dailyWords) => {
         if (isActive) setWords(dailyWords);
       })
@@ -52,7 +52,7 @@ export default function DailyLearnPage() {
     return () => {
       isActive = false;
     };
-  }, [isProgressReady]);
+  }, [isProgressReady, user]);
 
   const next = useCallback(() => {
     if (stepIndex < steps.length - 1) {

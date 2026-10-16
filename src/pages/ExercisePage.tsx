@@ -38,6 +38,7 @@ export default function ExercisePage() {
   const nextQuestion = useLearningStore((state) => state.nextQuestion);
   const setQuizPhase = useLearningStore((state) => state.setQuizPhase);
   const setReviewIndex = useLearningStore((state) => state.setReviewIndex);
+  const setWordProgress = useLearningStore((state) => state.setWordProgress);
   const resetQuiz = useLearningStore((state) => state.resetQuiz);
   const [questions, setQuestions] = useState<ExerciseQuestion[]>([]);
   const [reviewWords, setReviewWords] = useState<VocabularyDaily[]>([]);
@@ -51,8 +52,9 @@ export default function ExercisePage() {
   const progressPercent = questions.length > 0 ? (currentIndex / questions.length) * 100 : 0;
 
   useEffect(() => {
+    if (!isProgressReady || !user) return;
     let isActive = true;
-    getDailyWords(DAILY_WORD_COUNT)
+    getDailyWords(user.id, DAILY_WORD_COUNT)
       .then((dailyWords) => learningService.fetchExerciseQuestions(dailyWords.map((word) => word.id)))
       .then((data) => {
         if (!isActive) return;
@@ -69,7 +71,7 @@ export default function ExercisePage() {
     return () => {
       isActive = false;
     };
-  }, [resetQuiz]);
+  }, [isProgressReady, resetQuiz, user]);
 
   useEffect(() => {
     if (phase !== "REVIEW" || incorrectWordIds.length === 0) return;
@@ -95,14 +97,18 @@ export default function ExercisePage() {
     checkAnswer(currentQ.wordId, selectedOption === currentQ.correctAnswer);
     if (!user) return;
 
-    const record = useLearningStore.getState().reviewSchedule[currentQ.wordId];
     try {
-      await learningProgressService.saveForUser(user.id, currentQ.wordId, record);
+      const record = await learningProgressService.updateWordProgress(
+        user.id,
+        currentQ.wordId,
+        selectedOption === currentQ.correctAnswer,
+      );
+      setWordProgress(currentQ.wordId, record);
       setProgressSaveError(null);
     } catch (error) {
       setProgressSaveError(error instanceof Error ? error.message : "Không lưu được tiến trình.");
     }
-  }, [selectedOption, isChecked, currentQ, checkAnswer, user]);
+  }, [selectedOption, isChecked, currentQ, checkAnswer, setWordProgress, user]);
 
   const handleNext = useCallback(() => {
     if (questions.length > 0) {

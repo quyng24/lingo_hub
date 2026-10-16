@@ -34,9 +34,11 @@ Dự án đã hoàn thành luồng học và kiểm tra Daily Learn, đồng th�
 ### 🚧 Phase 4: Auth và tiến trình cá nhân
 
 - Supabase Auth dùng Email/Password; OAuth có thể bổ sung sau.
-- Sau khi đăng nhập, người dùng được chuyển tới dashboard riêng với tổng số từ đã học, đếm từ bảng `user_learning_progress`.
+- Dashboard lấy thống kê từ `user_learning_progress`, tách số từ đang học và số từ mastered. Mastered là từ đạt streak 5 lần đúng liên tiếp với chu kỳ ôn 30 ngày.
+- Trang `/daily-learn/progress` hiển thị phân bố từ mới học (1–3 ngày), đang nhớ (7–14 ngày), mastered (30 ngày) và daily streak. Streak được lưu theo user trong `user_learning_stats`.
 - Daily Learn và các trang game yêu cầu đăng nhập; bài tập chỉ lấy câu hỏi của 10 từ trong bài học hiện tại. RLS chỉ cho phép tài khoản đọc/ghi tiến trình của chính mình.
 - Next.js 16 Proxy kiểm tra session Supabase trong cookie trước khi render route; auth client dùng `@supabase/ssr` để đồng bộ cookie giữa browser và server, tránh client-side redirect gây nháy trang.
+- `LearningProgressService` quản lý từ đến hạn, cập nhật SRS sau mỗi câu trả lời và tổng hợp thống kê người dùng.
 
 ---
 
@@ -130,9 +132,9 @@ export type ExerciseQuestion = {
 ## Supabase (Phase 3–4)
 
 1. Tạo một Supabase project.
-2. Mở **SQL Editor**, chạy lần lượt các migration trong `supabase/migrations/`: schema học liệu và sau đó bảng tiến trình có RLS.
+2. Mở **SQL Editor**, chạy lần lượt các migration trong `supabase/migrations/`: schema học liệu, bảng tiến trình có RLS và migration `20261016000000_user_learning_stats.sql` để tạo dữ liệu streak.
 3. Mở `.env.local` trong thư mục gốc, rồi điền Project URL và publishable key (hoặc legacy anon key) từ **Project Settings → API**.
-4. Trong **Authentication → Providers**, bật Email và cấu hình Google/GitHub. Tạo OAuth app tương ứng ở Google Cloud Console và GitHub Developer Settings, điền Client ID/Secret ở Supabase, đồng thời khai báo callback URI của Supabase (dạng `https://<project-ref>.supabase.co/auth/v1/callback`) trong OAuth app; không đặt các secret OAuth trong frontend.
+4. Trong **Authentication → Providers**, bật Email. OAuth chưa cần bật; không đặt secret OAuth trong frontend.
 5. Trong **Authentication → URL Configuration**, đặt Site URL của ứng dụng và thêm Redirect URLs `http://localhost:3000/auth` cùng URL `/auth` trên domain triển khai.
 6. Khởi động lại dev server sau khi cập nhật `.env.local`.
 7. Trong Supabase **Authentication → Rate Limits**, giữ/bật giới hạn mặc định hoặc đặt ngưỡng phù hợp cho endpoint Auth. Cooldown trong form chỉ là lớp UX phía trình duyệt; giới hạn Supabase mới bảo vệ được request trực tiếp và theo IP.

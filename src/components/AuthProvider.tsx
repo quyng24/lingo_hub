@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!isActive) return {};
         useLearningStore.getState().resetQuiz();
         setReviewSchedule({});
-        return userId ? learningProgressService.fetchForUser(userId) : {};
+        return userId ? learningProgressService.getUserProgress(userId) : {};
       })
       .then((schedule) => {
         if (!isActive) return;

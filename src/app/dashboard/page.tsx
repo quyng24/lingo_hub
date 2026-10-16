@@ -9,19 +9,19 @@ import { learningProgressService } from "@/services/learningProgressService";
 
 function DashboardContent() {
   const { user, isProgressReady } = useAuth();
-  const [learnedWordCount, setLearnedWordCount] = useState<number | null>(null);
+  const [stats, setStats] = useState<{ learningWords: number; masteredWords: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user || !isProgressReady) return;
     let isActive = true;
 
-    learningProgressService.countLearnedWords(user.id)
-      .then((count) => {
-        if (isActive) setLearnedWordCount(count);
+    learningProgressService.getUserStats(user.id)
+      .then((userStats) => {
+        if (isActive) setStats(userStats);
       })
-      .catch((fetchError: unknown) => {
-        if (isActive) setError(fetchError instanceof Error ? fetchError.message : "Không tải được tiến trình.");
+      .catch(() => {
+        if (isActive) setError("Chưa tải được thống kê học tập. Hãy thử tải lại trang.");
       });
 
     return () => {
@@ -51,14 +51,19 @@ function DashboardContent() {
           </div>
 
           <div className="md:text-right">
-            <p className="text-sm font-medium text-zinc-500 mb-3 uppercase tracking-widest">Vốn từ vựng</p>
             {error ? (
               <p role="alert" className="text-sm text-rose-400/80">{error}</p>
             ) : (
-              <p className="text-6xl sm:text-7xl font-light tracking-tighter text-emerald-400">
-                {learnedWordCount === null ? "—" : learnedWordCount}
-                <span className="ml-2 text-2xl font-normal tracking-normal text-zinc-600">từ</span>
-              </p>
+              <div className="grid grid-cols-2 gap-6 text-left md:text-right">
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-zinc-500">Đang học</p>
+                  <p className="text-5xl font-light tabular-nums text-emerald-400">{stats?.learningWords ?? "—"}</p>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-widest text-zinc-500">Mastered</p>
+                  <p className="text-5xl font-light tabular-nums text-cyan-300">{stats?.masteredWords ?? "—"}</p>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -66,6 +71,9 @@ function DashboardContent() {
         <div className="mt-10">
           <p className="text-xs font-mono font-bold uppercase tracking-[0.18em] text-zinc-500">Bắt đầu</p>
           <h2 className="mt-2 text-2xl font-bold">Chọn hoạt động</h2>
+          <Link href="/daily-learn/progress" className="mt-3 inline-flex text-sm font-medium text-emerald-300 hover:text-emerald-200">
+            Xem chi tiết tiến độ
+          </Link>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
