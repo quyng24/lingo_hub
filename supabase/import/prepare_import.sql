@@ -1,0 +1,10 @@
+create table if not exists public.vocabulary_import_stage (id text primary key, word text not null, pronunciation text not null default '', part_of_speech text not null default '', meanings text[] not null default '{}', common_phrases jsonb not null default '[]'::jsonb, examples jsonb not null default '[]'::jsonb, difficulty text, tags text[] not null default '{}');
+create table if not exists public.exercise_questions_import_stage (id text primary key, word_id text not null, context text not null, sentence text not null, options text[] not null, correct_answer text not null, sort_order integer not null);
+create table if not exists public.topic_vocabulary_import_stage (topic_id text not null, vocabulary_id text not null, sort_order integer not null, primary key (topic_id, vocabulary_id));
+alter table public.vocabulary_import_stage enable row level security;
+alter table public.exercise_questions_import_stage enable row level security;
+alter table public.topic_vocabulary_import_stage enable row level security;
+revoke all on public.vocabulary_import_stage, public.exercise_questions_import_stage, public.topic_vocabulary_import_stage from public, anon, authenticated;
+truncate table public.vocabulary_import_stage, public.exercise_questions_import_stage, public.topic_vocabulary_import_stage;
+grant select, insert, update, delete on public.vocabulary_import_stage, public.exercise_questions_import_stage, public.topic_vocabulary_import_stage to service_role;
+notify pgrst, 'reload schema';
