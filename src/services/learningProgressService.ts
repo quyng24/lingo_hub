@@ -21,6 +21,7 @@ export type UserLearningStats = {
   learningWords: number;
   masteredWords: number;
   totalWords: number;
+  dueWords: number;
   streakCount: number;
   lastStudyDate: string | null;
   streakTrackingEnabled: boolean;
@@ -129,7 +130,8 @@ export class LearningProgressService {
 
   async getUserStats(userId: string): Promise<UserLearningStats> {
     const client = apiClient.requireClient();
-    const [newWordsResult, rememberingWordsResult, masteredWordsResult, streakResult] = await Promise.all([
+    const nowIso = new Date().toISOString();
+    const [newWordsResult, rememberingWordsResult, masteredWordsResult, dueWordsResult, streakResult] = await Promise.all([
       client.from("user_learning_progress")
         .select("word_id", { count: "exact", head: true })
         .eq("user_id", userId)
@@ -144,6 +146,10 @@ export class LearningProgressService {
         .eq("user_id", userId)
         .gte("streak", MASTERED_STREAK)
         .gte("interval_days", REVIEW_INTERVALS[REVIEW_INTERVALS.length - 1]),
+      client.from("user_learning_progress")
+        .select("word_id", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .lte("due_at", nowIso),
       client.from("user_learning_stats")
         .select("last_study_date,streak_count")
         .eq("user_id", userId)
@@ -153,6 +159,7 @@ export class LearningProgressService {
     apiClient.throwIfError(newWordsResult.error, "Không tải được số từ mới học");
     apiClient.throwIfError(rememberingWordsResult.error, "Không tải được số từ đang nhớ");
     apiClient.throwIfError(masteredWordsResult.error, "Không tải được số từ đã thành thạo");
+    apiClient.throwIfError(dueWordsResult.error, "Không tải được số từ cần ôn");
     const streakTrackingEnabled = !isMissingStreakTable(streakResult.error);
     if (streakTrackingEnabled) {
       apiClient.throwIfError(streakResult.error, "Không tải được chuỗi ngày học");
@@ -161,6 +168,7 @@ export class LearningProgressService {
     const newWords = newWordsResult.count ?? 0;
     const rememberingWords = rememberingWordsResult.count ?? 0;
     const masteredWords = masteredWordsResult.count ?? 0;
+    const dueWords = dueWordsResult.count ?? 0;
     const totalWords = newWords + rememberingWords + masteredWords;
     const lastStudyDate = streakTrackingEnabled ? streakResult.data?.last_study_date ?? null : null;
     const streakCount = lastStudyDate && daysBetweenDates(lastStudyDate, localDateString(new Date())) <= 1
@@ -172,6 +180,7 @@ export class LearningProgressService {
       rememberingWords,
       learningWords: newWords + rememberingWords,
       masteredWords,
+      dueWords,
       totalWords,
       streakCount,
       lastStudyDate,
