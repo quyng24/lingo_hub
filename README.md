@@ -32,11 +32,10 @@ Dự án đã hoàn thành luồng học và kiểm tra Daily Learn, đồng th�
 - Lịch ôn SRS dùng chu kỳ 1, 3, 7, 14, 30 ngày khi trả lời đúng và đặt lại 1 ngày khi trả lời sai.
 
 ### 🚧 Phase 4: Auth và tiến trình cá nhân
+### ✅ Phase 4: Auth và tiến trình cá nhân (Completed)
 
-- Supabase Auth dùng Email/Password; OAuth có thể bổ sung sau.
-- Dashboard lấy thống kê từ `user_learning_progress`, tách số từ đang học và số từ mastered. Mastered là từ đạt streak 5 lần đúng liên tiếp với chu kỳ ôn 30 ngày.
-- Trang `/daily-learn/progress` hiển thị phân bố từ mới học (1–3 ngày), đang nhớ (7–14 ngày), mastered (30 ngày) và daily streak. Streak được lưu theo user trong `user_learning_stats`.
-- Daily Learn và các trang game yêu cầu đăng nhập; bài tập chỉ lấy câu hỏi của 10 từ trong bài học hiện tại. RLS chỉ cho phép tài khoản đọc/ghi tiến trình của chính mình.
+Phase 4 đã hoàn thành ở mức ứng dụng. Để tiến trình cá nhân và daily streak hoạt động trên project Supabase, cần áp dụng đầy đủ các migration ở trên; nếu chưa có migration streak, trang tiến độ sẽ thông báo streak chưa được lưu.
+│   │   └── progress/       # Tiến độ cá nhân và daily streak (Phase 4)
 - Next.js 16 Proxy kiểm tra session Supabase trong cookie trước khi render route; auth client dùng `@supabase/ssr` để đồng bộ cookie giữa browser và server, tránh client-side redirect gây nháy trang.
 - `LearningProgressService` quản lý từ đến hạn, cập nhật SRS sau mỗi câu trả lời và tổng hợp thống kê người dùng.
 
