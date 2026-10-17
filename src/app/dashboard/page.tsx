@@ -75,15 +75,15 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-emerald-500/30 font-sans">
-      {/* 🧭 NAVIGATION HEADER */}
+      {/* NAVIGATION HEADER */}
       <DashboardHeader streakCount={streakCount} />
 
       {/* 📱 RESPONSIVE CONTAINER */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
-        {/* 🌟 HERO BANNER */}
+        {/* HERO BANNER */}
         <HeroBanner userEmail={user?.email} dueWords={dueWords} />
 
-        {/* ⚠️ ERROR STATE (IF ANY) */}
+        {/* ERROR STATE (IF ANY) */}
         {error && (
           <div
             role="alert"
@@ -99,7 +99,7 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* 📊 4 KEY METRIC CARDS */}
+        {/* 4 KEY METRIC CARDS */}
         <StatCards
           streakCount={streakCount}
           lastStudyDate={lastStudyDate}
@@ -112,7 +112,7 @@ export default function DashboardPage() {
           isLoading={isLoading}
         />
 
-        {/* 🧩 2-COLUMN MAIN CONTENT (ACTION CARDS & MEMORY PROGRESS) */}
+        {/* 2-COLUMN MAIN CONTENT (ACTION CARDS & MEMORY PROGRESS) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           {/* LEFT: 2 MAIN ACTIVITIES (7 COLS) */}
           <div className="lg:col-span-7">

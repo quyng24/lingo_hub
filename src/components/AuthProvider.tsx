@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { Session, User } from "@supabase/supabase-js";
+import { toast } from "sonner";
 import { authService } from "@/services/authService";
 import { learningProgressService } from "@/services/learningProgressService";
 import { useLearningStore } from "@/stores/learningStore";
@@ -32,8 +33,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     let isActive = true;
-    const subscription = authService.onAuthStateChange((nextSession) => {
-      if (isActive) setSession(nextSession);
+    const subscription = authService.onAuthStateChange((event, nextSession) => {
+      if (!isActive) return;
+      setSession(nextSession);
+
+      if (event === "SIGNED_IN" && nextSession) {
+        toast.success("Đăng nhập thành công!");
+      }
     });
 
     authService.getSession().then(({ data, error }) => {
@@ -85,6 +91,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useAuth() {
+export default function useAuth() {
   return useContext(AuthContext);
 }
+
+export { useAuth };

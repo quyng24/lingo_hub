@@ -17,6 +17,16 @@ export async function proxy(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
   const { pathname } = request.nextUrl;
+
+  // Supabase may fall back to its configured Site URL when a redirect URL is not allowlisted.
+  // Handle the returned PKCE code on the server before rendering the homepage or initializing
+  // the browser auth client, so the code is exchanged exactly once by the callback route.
+  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = "/auth/callback";
+    return NextResponse.redirect(callbackUrl);
+  }
+
   const isPrivateRoute =
     pathname === "/dashboard" ||
     pathname.startsWith("/daily-learn/") ||

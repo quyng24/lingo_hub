@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useEffect, useState } from "react";
+import { type FormEvent, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
@@ -19,7 +19,6 @@ const SIGN_IN_ATTEMPTS_KEY = "lingohub-sign-in-attempts";
 const MAX_SIGN_IN_ATTEMPTS = 5;
 const SIGN_IN_WINDOW_MS = 15 * 60 * 1000;
 const SIGN_IN_COOLDOWN_MS = 60 * 1000;
-const getCurrentTime = () => Date.now();
 
 function readSignInAttempts(): SignInAttempts {
   try {
@@ -53,6 +52,29 @@ function saveSignInAttempts(attempts: SignInAttempts) {
   }
 }
 
+function GoogleIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.4 9 5 12 5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M23.5 12.3c0-.8-.1-1.7-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3 0-.8.1-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.3 0 15.2c0 2.8.7 5.5 1.9 7.8l3.7-2.9z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 23.5c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2-6.4-4.8L1.9 17C3.7 20.7 7.5 23.5 12 23.5z"
+      />
+    </svg>
+  );
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const { progressError } = useAuth();
@@ -60,6 +82,7 @@ export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
 
@@ -71,13 +94,23 @@ export default function AuthPage() {
   }, []);
 
   useEffect(() => {
+    const searchParams = new URL(window.location.href).searchParams;
+    const errorParam = searchParams.get("error");
+    const messageParam = searchParams.get("message");
+    if (errorParam === "oauth_failed") {
+      toast.error(messageParam || "Đăng nhập bằng Google không thành công. Hãy thử lại.");
+    } else if (errorParam === "missing_config") {
+      toast.error("Hệ thống chưa cấu hình đầy đủ Supabase trong .env.local.");
+    }
+  }, []);
+
+  useEffect(() => {
     if (!cooldownUntil) return;
     const updateCooldown = () => {
       const seconds = Math.max(0, Math.ceil((cooldownUntil - Date.now()) / 1000));
       setCooldownSeconds(seconds);
       if (seconds === 0) {
-        const attempts = readSignInAttempts();
-        saveSignInAttempts({ ...attempts, count: 0, windowStartedAt: 0, blockedUntil: 0 });
+        saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
         setCooldownUntil(0);
       }
     };
@@ -93,80 +126,158 @@ export default function AuthPage() {
     if (progressError) toast.error(`Đăng nhập được nhưng chưa tải được lịch ôn: ${progressError}`);
   }, [progressError]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (mode === "sign-in") {
-      const { blockedUntil } = readSignInAttempts();
-      if (blockedUntil > getCurrentTime()) {
-        setCooldownUntil(blockedUntil);
-        toast.error("Bạn đã thử đăng nhập quá nhiều lần. Hãy chờ hết thời gian khóa rồi thử lại.");
-        return;
-      }
-    }
-    setIsSubmitting(true);
-    if (!authService.isConfigured) {
-      toast.error("Thiếu cấu hình Supabase trong .env.local.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    const result = mode === "sign-in"
-      ? await authService.signInWithPassword(email, password)
-      : await authService.signUp(email, password, `${window.location.origin}/auth`);
-
-    if (result.error) {
-      if (mode === "sign-in" && (result.error.status === 400 || result.error.status === 401)) {
-        const now = getCurrentTime();
-        const previous = readSignInAttempts();
-        const withinWindow = now - previous.windowStartedAt < SIGN_IN_WINDOW_MS;
-        const count = (withinWindow ? previous.count : 0) + 1;
-        const windowStartedAt = withinWindow ? previous.windowStartedAt : now;
-        const blockedUntil = count >= MAX_SIGN_IN_ATTEMPTS ? now + SIGN_IN_COOLDOWN_MS : 0;
-        saveSignInAttempts({ windowStartedAt, count, blockedUntil });
-        if (blockedUntil) setCooldownUntil(blockedUntil);
-      }
-      toast.error(result.error.message);
-    } else if (mode === "sign-up" && !result.data.session) {
-      toast.success("Hãy xác nhận địa chỉ email qua liên kết chúng tôi vừa gửi.");
-    } else {
-      saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
-      toast.success(mode === "sign-in" ? "Đăng nhập thành công." : "Tạo tài khoản thành công.");
-      router.replace(getPostAuthDestination());
-    }
-    setIsSubmitting(false);
-  }
-
   function getPostAuthDestination() {
     const destination = new URL(window.location.href).searchParams.get("next");
     if (!destination?.startsWith("/") || destination.startsWith("//")) return "/dashboard";
     return destination;
   }
 
+  async function handleGoogleSignIn() {
+    if (!authService.isConfigured) {
+      toast.error("Thiếu cấu hình Supabase trong .env.local.");
+      return;
+    }
+
+    setIsOAuthSubmitting(true);
+    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(getPostAuthDestination())}`;
+    const { error } = await authService.signInWithOAuth("google", redirectTo);
+    if (error) {
+      toast.error(error.message);
+      setIsOAuthSubmitting(false);
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (mode === "sign-in") {
+      const { blockedUntil } = readSignInAttempts();
+      if (blockedUntil > Date.now()) {
+        setCooldownUntil(blockedUntil);
+        toast.error("Bạn đã thử đăng nhập quá nhiều lần. Hãy chờ hết thời gian khóa rồi thử lại.");
+        return;
+      }
+    }
+
+    if (!authService.isConfigured) {
+      toast.error("Thiếu cấu hình Supabase trong .env.local.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result = mode === "sign-in"
+        ? await authService.signInWithPassword(email, password)
+        : await authService.signUp(email, password, `${window.location.origin}/auth`);
+
+      if (result.error) {
+        if (mode === "sign-in" && (result.error.status === 400 || result.error.status === 401)) {
+          const now = Date.now();
+          const previous = readSignInAttempts();
+          const withinWindow = now - previous.windowStartedAt < SIGN_IN_WINDOW_MS;
+          const count = (withinWindow ? previous.count : 0) + 1;
+          const windowStartedAt = withinWindow ? previous.windowStartedAt : now;
+          const blockedUntil = count >= MAX_SIGN_IN_ATTEMPTS ? now + SIGN_IN_COOLDOWN_MS : 0;
+          saveSignInAttempts({ windowStartedAt, count, blockedUntil });
+          if (blockedUntil) setCooldownUntil(blockedUntil);
+        }
+        toast.error(result.error.message);
+      } else if (mode === "sign-up" && !result.data.session) {
+        toast.success("Hãy xác nhận địa chỉ email qua liên kết chúng tôi vừa gửi.");
+      } else {
+        saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
+        router.replace(getPostAuthDestination());
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Không thể đăng nhập lúc này.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
-    <main className="relative flex min-h-dvh items-center justify-center overflow-x-hidden overflow-y-auto bg-zinc-950 px-0 py-0 text-zinc-100 sm:px-5 sm:py-12">
+    <main className="relative flex min-h-dvh items-center justify-center overflow-x-hidden overflow-y-auto bg-zinc-950 px-4 py-8 text-zinc-100 sm:px-5 sm:py-12">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]" />
-      <section className="relative flex min-h-dvh w-full flex-col justify-center border-0 bg-zinc-950 p-6 shadow-none sm:min-h-0 sm:max-w-md sm:border sm:border-zinc-800 sm:p-9 sm:shadow-2xl">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Trang chủ</Link>
-        <p className="mt-8 text-xs font-mono font-bold uppercase tracking-[0.2em] text-emerald-400">LingoHub · Tiến trình cá nhân</p>
-        <h1 className="mt-3 text-3xl font-black text-white">{mode === "sign-in" ? "Đăng nhập" : "Tạo tài khoản"}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-zinc-400">Đăng nhập để lưu lịch ôn từ vựng riêng và đồng bộ giữa các thiết bị.</p>
+      <section className="relative flex w-full flex-col justify-center border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:max-w-md sm:p-9">
+        <Link href="/" className="inline-flex items-center gap-2 text-sm text-zinc-400 transition-colors hover:text-white">
+          <ArrowLeft className="h-4 w-4" /> Trang chủ
+        </Link>
+        <p className="mt-8 text-xs font-mono font-bold uppercase tracking-[0.2em] text-emerald-400">
+          LingoHub · Tiến trình cá nhân
+        </p>
+        <h1 className="mt-2 text-3xl font-black text-white">
+          {mode === "sign-in" ? "Đăng nhập" : "Tạo tài khoản"}
+        </h1>
+        <p className="mt-2 text-xs leading-relaxed text-zinc-400 sm:text-sm">
+          Lưu lịch ôn từ vựng riêng và đồng bộ tiến độ giữa các thiết bị.
+        </p>
+
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isOAuthSubmitting || isSubmitting}
+          className="mt-6 flex w-full items-center justify-center gap-3 border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-sm font-semibold text-zinc-200 transition-colors hover:border-zinc-500 hover:bg-zinc-800 disabled:cursor-wait disabled:opacity-60"
+        >
+          <GoogleIcon className="h-4 w-4 shrink-0" />
+          <span>{isOAuthSubmitting ? "Đang chuyển hướng..." : "Tiếp tục với Google"}</span>
+        </button>
+
+        <div className="relative my-6 flex items-center justify-center">
+          <div className="w-full border-t border-zinc-800" />
+          <span className="absolute bg-zinc-950 px-3 text-[11px] font-mono uppercase tracking-wider text-zinc-500">
+            hoặc với email
+          </span>
+        </div>
 
         <form onSubmit={submit} className="space-y-4">
-          <label className="block text-sm font-semibold text-zinc-300">Email
-            <input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} className="mt-2 w-full border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-emerald-400" />
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
+            Email
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-1.5 w-full border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400 font-sans"
+              placeholder="ten@example.com"
+            />
           </label>
-          <label className="block text-sm font-semibold text-zinc-300">Mật khẩu
-            <input type="password" autoComplete={mode === "sign-in" ? "current-password" : "new-password"} minLength={6} required value={password} onChange={(event) => setPassword(event.target.value)} className="mt-2 w-full border border-zinc-700 bg-zinc-900 px-3 py-3 text-white outline-none focus:border-emerald-400" />
+          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
+            Mật khẩu
+            <input
+              type="password"
+              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+              minLength={6}
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              className="mt-1.5 w-full border border-zinc-700 bg-zinc-900 px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400 font-sans"
+              placeholder="Ít nhất 6 ký tự"
+            />
           </label>
-          <button type="submit" disabled={isSubmitting || (mode === "sign-in" && cooldownSeconds > 0)} className="w-full bg-emerald-500 px-4 py-3 font-black uppercase tracking-wider text-zinc-950 hover:bg-emerald-400 disabled:cursor-wait disabled:opacity-60">
-            {isSubmitting ? "Đang xử lý..." : cooldownSeconds > 0 && mode === "sign-in" ? `Thử lại sau ${cooldownSeconds}s` : mode === "sign-in" ? "Đăng nhập bằng email" : "Tạo tài khoản"}
+          <button
+            type="submit"
+            disabled={isSubmitting || isOAuthSubmitting || (mode === "sign-in" && cooldownSeconds > 0)}
+            className="mt-2 w-full bg-emerald-500 px-4 py-3 text-xs font-black uppercase tracking-widest text-zinc-950 transition-colors hover:bg-emerald-400 disabled:cursor-wait disabled:opacity-60"
+          >
+            {isSubmitting
+              ? "Đang xử lý..."
+              : cooldownSeconds > 0 && mode === "sign-in"
+                ? `Thử lại sau ${cooldownSeconds}s`
+                : mode === "sign-in"
+                  ? "Đăng nhập bằng email"
+                  : "Tạo tài khoản"}
           </button>
         </form>
 
-        <p className="mt-5 text-center text-sm text-zinc-500">
+        <p className="mt-6 text-center text-xs text-zinc-400">
           {mode === "sign-in" ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
-          <button type="button" onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")} className="font-bold text-emerald-300 hover:text-emerald-200">
-            {mode === "sign-in" ? "Đăng ký" : "Đăng nhập"}
+          <button
+            type="button"
+            onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+            className="ml-1 font-bold text-emerald-400 hover:text-emerald-300"
+          >
+            {mode === "sign-in" ? "Đăng ký ngay" : "Đăng nhập"}
           </button>
         </p>
       </section>

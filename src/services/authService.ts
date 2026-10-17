@@ -1,4 +1,4 @@
-import type { Session } from "@supabase/supabase-js";
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
 import { apiClient } from "@/services/apiClient";
 
 export class AuthService {
@@ -10,9 +10,9 @@ export class AuthService {
     return apiClient.requireClient().auth.getSession();
   }
 
-  onAuthStateChange(callback: (session: Session | null) => void) {
+  onAuthStateChange(callback: (event: AuthChangeEvent, session: Session | null) => void) {
     const { data: { subscription } } = apiClient.requireClient().auth.onAuthStateChange(
-      (_event, session) => callback(session),
+      (event, session) => callback(event, session),
     );
     return subscription;
   }
@@ -26,6 +26,15 @@ export class AuthService {
       email,
       password,
       options: { emailRedirectTo },
+    });
+  }
+
+  signInWithOAuth(provider: "google" | "github", redirectTo: string) {
+    return apiClient.requireClient().auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo,
+      },
     });
   }
 
