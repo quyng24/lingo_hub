@@ -139,7 +139,10 @@ export default function AuthPage() {
     }
 
     setIsOAuthSubmitting(true);
-    const redirectTo = `${window.location.origin}/auth/callback?next=${encodeURIComponent(getPostAuthDestination())}`;
+    const destination = getPostAuthDestination();
+    // Lưu destination vào cookie ngắn hạn để URL redirectTo gửi tới Supabase luôn sạch sẽ (tránh lỗi GoTrue glob wildcard với query params)
+    document.cookie = `lingohub_auth_next=${encodeURIComponent(destination)}; path=/; max-age=300; SameSite=Lax`;
+    const redirectTo = `${window.location.origin}/auth/callback`;
     const { error } = await authService.signInWithOAuth("google", redirectTo);
     if (error) {
       toast.error(error.message);
@@ -186,6 +189,7 @@ export default function AuthPage() {
         toast.success("Hãy xác nhận địa chỉ email qua liên kết chúng tôi vừa gửi.");
       } else {
         saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
+        toast.success("Đăng nhập thành công!");
         router.replace(getPostAuthDestination());
       }
     } catch (error) {

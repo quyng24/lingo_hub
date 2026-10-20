@@ -52,11 +52,11 @@ export default function HeroBanner({ userEmail, dueWords }: HeroBannerProps) {
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            href="/game/word-blaster"
+            href="/game"
             className="inline-flex items-center justify-center gap-2 px-4 py-3 border border-zinc-700 bg-zinc-900/60 hover:border-zinc-500 text-zinc-300 font-bold text-xs uppercase tracking-widest transition-colors"
           >
             <Gamepad2 className="w-4 h-4 text-cyan-400" />
-            Word Blaster
+            Thư viện Game
           </Link>
         </div>
       </div>

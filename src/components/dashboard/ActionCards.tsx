@@ -41,9 +41,9 @@ export default function ActionCards() {
           </div>
         </Link>
 
-        {/* CARD 2: WORD BLASTER */}
+        {/* CARD 2: GAME LIBRARY */}
         <Link
-          href="/game/word-blaster"
+          href="/game"
           className="group flex flex-col justify-between border border-cyan-500/40 bg-zinc-900/60 p-5 sm:p-6 hover:bg-cyan-500 hover:border-cyan-500 transition-all duration-200"
         >
           <div className="flex items-center justify-between">
@@ -51,19 +51,19 @@ export default function ActionCards() {
               <Gamepad2 className="w-5 h-5" />
             </div>
             <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-cyan-400 group-hover:text-zinc-950 transition-colors">
-              Phản xạ gõ
+              02 mini-game
             </span>
           </div>
 
           <div className="mt-5">
             <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-zinc-950 transition-colors">
-              Word Blaster
+              Thư viện Game
             </h3>
             <p className="mt-1 text-xs text-zinc-400 group-hover:text-zinc-900 transition-colors leading-relaxed">
-              Tiêu diệt từ đang rơi bằng tốc độ gõ phím để rèn phản xạ.
+              Luyện phản xạ và nhớ từ qua Word Blaster và Word Island.
             </p>
             <div className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-cyan-300 group-hover:text-zinc-950 transition-colors">
-              Chơi ngay <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              Chọn game chơi <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
         </Link>

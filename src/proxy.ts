@@ -30,9 +30,7 @@ export async function proxy(request: NextRequest) {
   const isPrivateRoute =
     pathname === "/dashboard" ||
     pathname.startsWith("/daily-learn/") ||
-    pathname === "/game" ||
-    pathname.startsWith("/game/") ||
-    ["/DailyLearnPage", "/ExercisePage", "/GameOver", "/WordBlaster"].includes(pathname);
+    ["/DailyLearnPage", "/ExercisePage"].includes(pathname);
 
   if (!url || !key) {
     if (!isPrivateRoute) return NextResponse.next();
@@ -82,10 +80,7 @@ export const config = {
     "/auth",
     "/dashboard/:path*",
     "/daily-learn/:path*",
-    "/game/:path*",
     "/DailyLearnPage/:path*",
     "/ExercisePage/:path*",
-    "/GameOver/:path*",
-    "/WordBlaster/:path*",
   ],
 };

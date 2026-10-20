@@ -4,7 +4,8 @@ import { createServerClient } from "@supabase/ssr";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
   const code = searchParams.get("code");
-  let next = searchParams.get("next") ?? "/dashboard";
+  const cookieNext = request.cookies.get("lingohub_auth_next")?.value;
+  let next = cookieNext ? decodeURIComponent(cookieNext) : (searchParams.get("next") ?? "/dashboard");
 
   // Prevent open redirect attacks
   if (!next.startsWith("/") || next.startsWith("//")) {
@@ -33,6 +34,7 @@ export async function GET(request: NextRequest) {
 
     // Create the redirect response upfront so cookies can be set on it
     const redirectResponse = NextResponse.redirect(new URL(next, origin));
+    redirectResponse.cookies.delete("lingohub_auth_next");
 
     const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {

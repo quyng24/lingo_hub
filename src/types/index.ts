@@ -65,3 +65,5 @@ export interface ExerciseQuestion {
     options: string[];
     correctAnswer: string;
 }
+
+export * from './wordIsland';

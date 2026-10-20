@@ -55,32 +55,58 @@ function GameLibraryPage() {
       <section className="max-w-6xl mx-auto px-5 sm:px-6 py-10 sm:py-14">
         <div className="flex items-center justify-between gap-4 mb-5">
           <h2 className="text-sm font-mono font-bold uppercase tracking-[0.2em] text-zinc-500">Đang có thể chơi</h2>
-          <span className="text-sm text-zinc-500">01 game</span>
+          <span className="text-sm text-zinc-500">02 game</span>
         </div>
 
-        <Link
-          href="/game/word-blaster"
-          className="group grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 md:gap-8 items-center border border-cyan-500/40 bg-cyan-500/5 p-6 sm:p-8 hover:bg-cyan-500 hover:border-cyan-500 transition-colors"
-        >
-          <div className="w-16 h-16 flex items-center justify-center bg-cyan-500 text-zinc-950 group-hover:bg-zinc-950 group-hover:text-cyan-400 transition-colors">
-            <Keyboard className="w-8 h-8" />
-          </div>
-          <div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h3 className="text-2xl sm:text-3xl font-black text-white group-hover:text-zinc-950 transition-colors">Word Blaster</h3>
-              <span className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400 group-hover:text-zinc-800 transition-colors">Từ vựng · gõ phím</span>
+        <div className="space-y-6">
+          <Link
+            href="/game/word-blaster"
+            className="group grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 md:gap-8 items-center border border-cyan-500/40 bg-cyan-500/5 p-6 sm:p-8 hover:bg-cyan-500 hover:border-cyan-500 transition-colors"
+          >
+            <div className="w-16 h-16 flex items-center justify-center bg-cyan-500 text-zinc-950 group-hover:bg-zinc-950 group-hover:text-cyan-400 transition-colors">
+              <Keyboard className="w-8 h-8" />
             </div>
-            <p className="mt-3 max-w-xl leading-relaxed text-zinc-400 group-hover:text-zinc-800 transition-colors">
-              Tiêu diệt những từ đang rơi bằng tốc độ gõ và xây combo phản xạ tiếng Anh.
-            </p>
-            <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-zinc-300 group-hover:text-zinc-950 transition-colors">
-              <Trophy className="w-4 h-4" /> Phù hợp khi bạn dùng máy tính
+            <div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h3 className="text-2xl sm:text-3xl font-black text-white group-hover:text-zinc-950 transition-colors">Word Blaster</h3>
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400 group-hover:text-zinc-800 transition-colors">Từ vựng · gõ phím</span>
+              </div>
+              <p className="mt-3 max-w-xl leading-relaxed text-zinc-400 group-hover:text-zinc-800 transition-colors">
+                Tiêu diệt những từ đang rơi bằng tốc độ gõ và xây combo phản xạ tiếng Anh.
+              </p>
+              <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-zinc-300 group-hover:text-zinc-950 transition-colors">
+                <Trophy className="w-4 h-4" /> Phù hợp khi bạn dùng máy tính
+              </div>
             </div>
-          </div>
-          <span className="inline-flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-black uppercase tracking-wider text-zinc-950 group-hover:bg-zinc-950 group-hover:text-white transition-colors">
-            <Play className="w-4 h-4 fill-current" /> Chơi ngay
-          </span>
-        </Link>
+            <span className="inline-flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-black uppercase tracking-wider text-zinc-950 group-hover:bg-zinc-950 group-hover:text-white transition-colors">
+              <Play className="w-4 h-4 fill-current" /> Chơi ngay
+            </span>
+          </Link>
+
+          <Link
+            href="/game/word-island"
+            className="group grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-6 md:gap-8 items-center border border-amber-500/40 bg-amber-500/5 p-6 sm:p-8 hover:bg-amber-500 hover:border-amber-500 transition-colors"
+          >
+            <div className="w-16 h-16 flex items-center justify-center bg-amber-500 text-zinc-950 group-hover:bg-zinc-950 group-hover:text-amber-400 transition-colors text-3xl">
+              🏝️
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h3 className="text-2xl sm:text-3xl font-black text-white group-hover:text-zinc-950 transition-colors">Word Island</h3>
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-amber-400 group-hover:text-zinc-800 transition-colors">2D Pixel-art · sinh tồn</span>
+              </div>
+              <p className="mt-3 max-w-xl leading-relaxed text-zinc-400 group-hover:text-zinc-800 transition-colors">
+                Khám phá hòn đảo sinh tồn, thu thập gỗ và đá, hỗ trợ Thuyền trưởng Minh và giải các câu đố từ vựng để mở cổng cổ đại!
+              </p>
+              <div className="mt-4 flex items-center gap-2 text-sm font-semibold text-zinc-300 group-hover:text-zinc-950 transition-colors">
+                <Trophy className="w-4 h-4" /> Di chuyển bằng WASD / Phím mũi tên &amp; tương tác phím [E]
+              </div>
+            </div>
+            <span className="inline-flex items-center justify-center gap-2 bg-white px-5 py-3 text-sm font-black uppercase tracking-wider text-zinc-950 group-hover:bg-zinc-950 group-hover:text-white transition-colors">
+              <Play className="w-4 h-4 fill-current" /> Chơi ngay
+            </span>
+          </Link>
+        </div>
 
         <div className="flex items-center justify-between gap-4 mt-12 mb-5">
           <h2 className="text-sm font-mono font-bold uppercase tracking-[0.2em] text-zinc-500">Sắp ra mắt</h2>
