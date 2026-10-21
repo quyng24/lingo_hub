@@ -227,17 +227,17 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'dog',
-            isCorrect: true,
-            explanationEn: 'Correct! The faithful dog guides you safely across the sanctuary!',
-            explanationVi: 'Chính xác! Chú chó trung thành dẫn đường cho bạn qua khu bảo tồn!',
-          },
-          {
-            id: 'b',
             text: 'shark',
             isCorrect: false,
             explanationEn: 'A shark lives in the deep ocean, not on camp grounds.',
             explanationVi: 'Shark là cá mập sống dưới đại dương.',
+          },
+          {
+            id: 'b',
+            text: 'dog',
+            isCorrect: true,
+            explanationEn: 'Correct! The faithful dog guides you safely across the sanctuary!',
+            explanationVi: 'Chính xác! Chú chó trung thành dẫn đường cho bạn qua khu bảo tồn!',
           },
           {
             id: 'c',
@@ -269,24 +269,24 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'cat',
-            isCorrect: true,
-            explanationEn: 'Correct! The gentle cat supervises your tool crafting.',
-            explanationVi: 'Chính xác! Con mèo nhẹ nhàng dõi theo bạn chế tạo công cụ.',
-          },
-          {
-            id: 'b',
             text: 'whale',
             isCorrect: false,
             explanationEn: 'Whales are gigantic sea mammals.',
             explanationVi: 'Whale là cá voi khổng lồ dưới biển.',
           },
           {
-            id: 'c',
+            id: 'b',
             text: 'wolf',
             isCorrect: false,
             explanationEn: 'A wild wolf hunts in packs in the cold woods.',
             explanationVi: 'Wolf là chó sói hoang dã.',
+          },
+          {
+            id: 'c',
+            text: 'cat',
+            isCorrect: true,
+            explanationEn: 'Correct! The gentle cat supervises your tool crafting.',
+            explanationVi: 'Chính xác! Con mèo nhẹ nhàng dõi theo bạn chế tạo công cụ.',
           },
           {
             id: 'd',
@@ -309,31 +309,31 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'elephant',
-            isCorrect: true,
-            explanationEn: 'Awesome! You forged the Wildlife Rescue Hook successfully!',
-            explanationVi: 'Tuyệt vời! Bạn đã chế tạo thành công Móc Cứu Hộ Động Vật!',
-          },
-          {
-            id: 'b',
             text: 'rabbit',
             isCorrect: false,
             explanationEn: 'Rabbits are small hopping mammals with long ears.',
             explanationVi: 'Rabbit là con thỏ nhỏ nhắn có tai dài.',
           },
           {
-            id: 'c',
+            id: 'b',
             text: 'fox',
             isCorrect: false,
             explanationEn: 'A fox is a clever woodland predator.',
             explanationVi: 'Fox là con cáo thông minh.',
           },
           {
-            id: 'd',
+            id: 'c',
             text: 'sheep',
             isCorrect: false,
             explanationEn: 'Sheep graze peacefully in green pastures.',
             explanationVi: 'Sheep là con cừu ăn cỏ.',
+          },
+          {
+            id: 'd',
+            text: 'elephant',
+            isCorrect: true,
+            explanationEn: 'Awesome! You forged the Wildlife Rescue Hook successfully!',
+            explanationVi: 'Tuyệt vời! Bạn đã chế tạo thành công Móc Cứu Hộ Động Vật!',
           },
         ],
       },
@@ -391,24 +391,24 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'dolphin',
-            isCorrect: true,
-            explanationEn: 'Brilliant! Inside the chest you discovered the Sanctuary Safety Gate Key!',
-            explanationVi: 'Xuất sắc! Bạn tìm thấy Chìa Khóa Cổng Khu Bảo Tồn và nhu yếu phẩm!',
-          },
-          {
-            id: 'b',
             text: 'camel',
             isCorrect: false,
             explanationEn: 'A camel traverses arid desert dunes.',
             explanationVi: 'Camel là lạc đà sống ở sa mạc.',
           },
           {
-            id: 'c',
+            id: 'b',
             text: 'zebra',
             isCorrect: false,
             explanationEn: 'Zebras have distinctive black and white stripes.',
             explanationVi: 'Zebra là ngựa vằn thảo nguyên.',
+          },
+          {
+            id: 'c',
+            text: 'dolphin',
+            isCorrect: true,
+            explanationEn: 'Brilliant! Inside the chest you discovered the Sanctuary Safety Gate Key!',
+            explanationVi: 'Xuất sắc! Bạn tìm thấy Chìa Khóa Cổng Khu Bảo Tồn và nhu yếu phẩm!',
           },
           {
             id: 'd',
@@ -433,17 +433,17 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'eagle',
-            isCorrect: true,
-            explanationEn: 'Excellent! The upper stone counterweight unlocks!',
-            explanationVi: 'Xuất sắc! Quả đối trọng đá phía trên đã mở chốt!',
-          },
-          {
-            id: 'b',
             text: 'duck',
             isCorrect: false,
             explanationEn: 'A duck is a waterfowl with webbed feet.',
             explanationVi: 'Duck là con vịt chân màng.',
+          },
+          {
+            id: 'b',
+            text: 'eagle',
+            isCorrect: true,
+            explanationEn: 'Excellent! The upper stone counterweight unlocks!',
+            explanationVi: 'Xuất sắc! Quả đối trọng đá phía trên đã mở chốt!',
           },
           {
             id: 'c',
@@ -473,35 +473,34 @@ export const DEFAULT_FALLBACK_QUEST: DynamicQuest = {
         options: [
           {
             id: 'a',
-            text: 'lion',
-            isCorrect: true,
-            explanationEn: 'Victory! The massive Sanctuary Gate rumbles wide open. You conquered Word Island!',
-            explanationVi: 'Chiến thắng! Cánh cổng đá mở toang. Bạn đã bảo vệ thành công Đảo Muông Thú!',
-          },
-          {
-            id: 'b',
             text: 'monkey',
             isCorrect: false,
             explanationEn: 'Monkeys swing through jungle canopies.',
             explanationVi: 'Monkey là con khỉ leo trèo.',
           },
           {
-            id: 'c',
+            id: 'b',
             text: 'horse',
             isCorrect: false,
             explanationEn: 'Horses are swift four-legged galloping steeds.',
             explanationVi: 'Horse là con ngựa.',
           },
           {
-            id: 'd',
+            id: 'c',
             text: 'giraffe',
             isCorrect: false,
             explanationEn: 'Giraffes are the tallest terrestrial animals.',
             explanationVi: 'Giraffe là hươu cao cổ.',
+          },
+          {
+            id: 'd',
+            text: 'lion',
+            isCorrect: true,
+            explanationEn: 'Victory! The massive Sanctuary Gate rumbles wide open. You conquered Word Island!',
+            explanationVi: 'Chiến thắng! Cánh cổng đá mở toang. Bạn đã bảo vệ thành công Đảo Muông Thú!',
           },
         ],
       },
     ],
   },
 };
-

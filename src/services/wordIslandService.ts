@@ -116,9 +116,10 @@ export class WordIslandService {
         };
         orderedWords.push(wordInfo);
 
-        // Build 4 options with labels 'a', 'b', 'c', 'd'
+        // Build 4 options with labels 'a', 'b', 'c', 'd' and shuffle them randomly
         const optionIds = ['a', 'b', 'c', 'd'];
-        const options: VocabQuestionOption[] = q.options.map((optText, optIdx) => {
+        const shuffledOptions = shuffleArray(q.options);
+        const options: VocabQuestionOption[] = shuffledOptions.map((optText, optIdx) => {
           const isCorrect = optText.trim().toLowerCase() === q.correct_answer.trim().toLowerCase();
           return {
             id: optionIds[optIdx] || String(optIdx + 1),
@@ -178,4 +179,3 @@ export class WordIslandService {
 }
 
 export const wordIslandService = new WordIslandService();
-
