@@ -36,6 +36,12 @@ const REVIEW_INTERVALS = [1, 3, 7, 14, 30];
 const MASTERED_STREAK = REVIEW_INTERVALS.length;
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+export function getEndOfToday(base = new Date()): Date {
+  const d = new Date(base);
+  d.setHours(23, 59, 59, 999);
+  return d;
+}
+
 function localDateString(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -60,6 +66,18 @@ function isMissingStreakTable(error: SupabaseQueryError | null) {
 }
 
 export class LearningProgressService {
+  private lastRequestTime = 0;
+  private readonly minRequestIntervalMs = 250;
+
+  private async throttleRequest(): Promise<void> {
+    const now = Date.now();
+    const elapsed = now - this.lastRequestTime;
+    if (elapsed < this.minRequestIntervalMs) {
+      await new Promise((resolve) => setTimeout(resolve, this.minRequestIntervalMs - elapsed));
+    }
+    this.lastRequestTime = Date.now();
+  }
+
   async getUserProgress(userId: string): Promise<Record<string, ReviewRecord>> {
     const { data, error } = await apiClient.requireClient()
       .from("user_learning_progress")
@@ -76,7 +94,7 @@ export class LearningProgressService {
     );
   }
 
-  async getWordsDueForReview(userId: string, asOf = new Date()): Promise<VocabularyDaily[]> {
+  async getWordsDueForReview(userId: string, asOf = getEndOfToday()): Promise<VocabularyDaily[]> {
     const { data, error } = await apiClient.requireClient()
       .from("user_learning_progress")
       .select("word_id")
@@ -95,7 +113,29 @@ export class LearningProgressService {
     isCorrect: boolean,
     reviewedAt = new Date(),
   ): Promise<ReviewRecord> {
+    await this.throttleRequest();
     const client = apiClient.requireClient();
+
+    // 1. Attempt Server-Side RPC (anti-cheat & server-computed SRS)
+    try {
+      const { data: rpcData, error: rpcError } = await client.rpc("record_word_review", {
+        p_word_id: wordId,
+        p_is_correct: isCorrect,
+      });
+
+      if (!rpcError && rpcData && typeof rpcData === "object" && "streak" in rpcData) {
+        const result = rpcData as { streak: number; intervalDays: number; dueAt: string };
+        return {
+          streak: Number(result.streak),
+          intervalDays: Number(result.intervalDays),
+          dueAt: String(result.dueAt),
+        };
+      }
+    } catch {
+      // Fall back to client calculation if RPC is not yet migrated in database
+    }
+
+    // 2. Client fallback
     const { data: previous, error: readError } = await client
       .from("user_learning_progress")
       .select("streak")
@@ -130,7 +170,7 @@ export class LearningProgressService {
 
   async getUserStats(userId: string): Promise<UserLearningStats> {
     const client = apiClient.requireClient();
-    const nowIso = new Date().toISOString();
+    const endOfDayIso = getEndOfToday().toISOString();
     const [newWordsResult, rememberingWordsResult, masteredWordsResult, dueWordsResult, streakResult] = await Promise.all([
       client.from("user_learning_progress")
         .select("word_id", { count: "exact", head: true })
@@ -149,7 +189,7 @@ export class LearningProgressService {
       client.from("user_learning_progress")
         .select("word_id", { count: "exact", head: true })
         .eq("user_id", userId)
-        .lte("due_at", nowIso),
+        .lte("due_at", endOfDayIso),
       client.from("user_learning_stats")
         .select("last_study_date,streak_count")
         .eq("user_id", userId)
@@ -189,6 +229,7 @@ export class LearningProgressService {
   }
 
   private async updateDailyStreak(userId: string, reviewedAt: Date) {
+    await this.throttleRequest();
     const client = apiClient.requireClient();
     const studyDate = localDateString(reviewedAt);
     const { data: previous, error: readError } = await client

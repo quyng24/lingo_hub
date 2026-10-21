@@ -77,7 +77,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export default function AuthPage() {
   const router = useRouter();
-  const { progressError } = useAuth();
+  const { user, progressError } = useAuth();
   const [mode, setMode] = useState<AuthMode>("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -85,6 +85,12 @@ export default function AuthPage() {
   const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      window.location.href = getPostAuthDestination();
+    }
+  }, [user]);
 
   useEffect(() => {
     const { blockedUntil } = readSignInAttempts();
@@ -190,13 +196,26 @@ export default function AuthPage() {
       } else {
         saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
         toast.success("Đăng nhập thành công!");
-        router.replace(getPostAuthDestination());
+        const destination = getPostAuthDestination();
+        router.refresh();
+        window.location.href = destination;
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Không thể đăng nhập lúc này.");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (user) {
+    return (
+      <main className="relative flex min-h-dvh items-center justify-center bg-zinc-950 px-4 text-zinc-100">
+        <div className="text-center space-y-3">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-sm font-mono text-zinc-400">Đang chuyển hướng đến bảng điều khiển...</p>
+        </div>
+      </main>
+    );
   }
 
   return (

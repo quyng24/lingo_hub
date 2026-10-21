@@ -14,10 +14,20 @@ export async function getDailyWords(userId: string, count: number = DAILY_WORD_C
     const now = Date.now();
     const dueIds = new Set(dueWords.map((word) => word.id));
     const due = dueWords;
-    const fresh = vocabulary.filter((word) => !schedule[word.id]);
+    const fresh = vocabulary.filter((word) => !dueIds.has(word.id) && !schedule[word.id]);
     const upcoming = vocabulary
         .filter((word) => !dueIds.has(word.id) && schedule[word.id] && Date.parse(schedule[word.id].dueAt) > now)
         .sort((left, right) => Date.parse(schedule[left.id].dueAt) - Date.parse(schedule[right.id].dueAt));
 
-    return [...due, ...fresh, ...upcoming].slice(0, count);
+    const seen = new Set<string>();
+    const result: VocabularyDaily[] = [];
+    for (const word of [...due, ...fresh, ...upcoming]) {
+        if (!seen.has(word.id)) {
+            seen.add(word.id);
+            result.push(word);
+            if (result.length >= count) break;
+        }
+    }
+
+    return result;
 }

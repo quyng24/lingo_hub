@@ -21,7 +21,7 @@ export async function proxy(request: NextRequest) {
   // Supabase may fall back to its configured Site URL when a redirect URL is not allowlisted.
   // Handle the returned PKCE code on the server before rendering the homepage or initializing
   // the browser auth client, so the code is exchanged exactly once by the callback route.
-  if (pathname === "/" && request.nextUrl.searchParams.has("code")) {
+  if ((pathname === "/" || pathname === "/auth") && request.nextUrl.searchParams.has("code")) {
     const callbackUrl = request.nextUrl.clone();
     callbackUrl.pathname = "/auth/callback";
     return NextResponse.redirect(callbackUrl);
@@ -30,7 +30,8 @@ export async function proxy(request: NextRequest) {
   const isPrivateRoute =
     pathname === "/dashboard" ||
     pathname.startsWith("/daily-learn/") ||
-    ["/DailyLearnPage", "/ExercisePage"].includes(pathname);
+    pathname.startsWith("/game/word-blaster") ||
+    ["/DailyLearnPage", "/ExercisePage", "/WordBlaster"].includes(pathname);
 
   if (!url || !key) {
     if (!isPrivateRoute) return NextResponse.next();
@@ -74,13 +75,17 @@ export async function proxy(request: NextRequest) {
   return response;
 }
 
+// Next.js 16 deprecated middleware.ts and renamed it to proxy.ts.
+// This is the native Next.js Middleware running before request completion.
 export const config = {
   matcher: [
-    "/",
-    "/auth",
-    "/dashboard/:path*",
-    "/daily-learn/:path*",
-    "/DailyLearnPage/:path*",
-    "/ExercisePage/:path*",
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - static media files (svg, png, jpg, jpeg, gif, webp)
+     */
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
