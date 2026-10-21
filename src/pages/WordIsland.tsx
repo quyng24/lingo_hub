@@ -37,7 +37,7 @@ export default function WordIsland() {
       {/* Responsive Viewport Wrapper */}
       <main className="flex-1 w-full min-h-0 flex items-center justify-center relative p-1">
         {/* Aspect-ratio preserving scaled canvas viewport */}
-        <div className="relative aspect-[20/14] w-full max-w-[calc((100dvh-4.5rem)*20/14)] max-h-full border-3 sm:border-4 border-[#78350f] rounded-xl shadow-[0_0_60px_rgba(0,0,0,0.85)] overflow-hidden bg-[#1d4e68] flex items-center justify-center">
+        <div className="relative aspect-20/14 w-full max-w-[calc((100dvh-4.5rem)*20/14)] max-h-full border-3 sm:border-4 border-[#78350f] rounded-xl shadow-[0_0_60px_rgba(0,0,0,0.85)] overflow-hidden bg-[#1d4e68] flex items-center justify-center">
           <canvas
             ref={canvasRef}
             width={canvasWidth}
