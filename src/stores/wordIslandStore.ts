@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import type { DialogueState, QuestStage, QuizState, Resources } from '@/types';
+import type { DialogueState, DynamicQuest, QuestStage, QuizState, Resources } from '@/types';
+import { DEFAULT_FALLBACK_QUEST } from '@/utils/wordIslandThemes';
+import { wordIslandService } from '@/services/wordIslandService';
 
 interface WordIslandStore {
   questStage: QuestStage;
@@ -7,6 +9,8 @@ interface WordIslandStore {
   isPaused: boolean;
   dialogue: DialogueState | null;
   activeQuiz: QuizState | null;
+  currentQuest: DynamicQuest;
+  isLoadingQuest: boolean;
 
   setQuestStage: (stage: QuestStage) => void;
   setResources: (resources: Resources) => void;
@@ -16,6 +20,8 @@ interface WordIslandStore {
   togglePause: () => void;
   setDialogue: (dialogue: DialogueState | null) => void;
   setActiveQuiz: (quiz: QuizState | null | ((prev: QuizState | null) => QuizState | null)) => void;
+  setCurrentQuest: (quest: DynamicQuest) => void;
+  loadNewQuest: () => Promise<void>;
   resetGame: () => void;
 }
 
@@ -32,6 +38,8 @@ export const useWordIslandStore = create<WordIslandStore>()((set) => ({
   isPaused: false,
   dialogue: null,
   activeQuiz: null,
+  currentQuest: DEFAULT_FALLBACK_QUEST,
+  isLoadingQuest: false,
 
   setQuestStage: (stage) => set({ questStage: stage }),
   setResources: (resources) => set({ resources }),
@@ -53,6 +61,18 @@ export const useWordIslandStore = create<WordIslandStore>()((set) => ({
     set((state) => ({
       activeQuiz: typeof quiz === 'function' ? quiz(state.activeQuiz) : quiz,
     })),
+  setCurrentQuest: (quest) => set({ currentQuest: quest }),
+
+  loadNewQuest: async () => {
+    set({ isLoadingQuest: true });
+    try {
+      const newQuest = await wordIslandService.fetchRandomQuest();
+      set({ currentQuest: newQuest, isLoadingQuest: false });
+    } catch {
+      set({ isLoadingQuest: false });
+    }
+  },
+
   resetGame: () =>
     set({
       questStage: 'TALK_TO_NPC',
@@ -62,4 +82,3 @@ export const useWordIslandStore = create<WordIslandStore>()((set) => ({
       activeQuiz: null,
     }),
 }));
-

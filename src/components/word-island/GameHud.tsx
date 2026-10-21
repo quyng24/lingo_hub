@@ -3,20 +3,33 @@ import type { Resources } from "@/types";
 interface GameHudProps {
   resources: Resources;
   objectiveText: string;
+  toolNameVi?: string;
+  keyNameVi?: string;
+  realmTitle?: string;
   onInteract: () => void;
 }
 
 export default function GameHud({
   resources,
   objectiveText,
+  toolNameVi = "Rìu Sinh Tồn",
+  keyNameVi = "Chìa Khóa Cổng",
+  realmTitle,
   onInteract,
 }: GameHudProps) {
   return (
     <>
       {/* Top Left: Inventory HUD */}
       <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 bg-[#1e293b]/90 border border-amber-500/80 rounded-lg p-2 sm:p-2.5 text-xs space-y-1 shadow-lg pointer-events-none backdrop-blur-xs select-none">
-        <div className="font-bold text-amber-300 uppercase tracking-wider text-[10px] sm:text-xs">
-          Túi đồ (Inventory)
+        <div className="flex items-center justify-between gap-2">
+          <div className="font-bold text-amber-300 uppercase tracking-wider text-[10px] sm:text-xs">
+            Túi đồ (Inventory)
+          </div>
+          {realmTitle && (
+            <span className="text-[10px] text-amber-400/80 font-mono hidden sm:inline">
+              📍 {realmTitle}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-[11px] sm:text-xs">
           <span>
@@ -38,7 +51,7 @@ export default function GameHud({
               resources.hasAxe ? "text-emerald-400 font-bold" : "text-slate-400"
             }
           >
-            🪓 {resources.hasAxe ? "Rìu Đá" : "Chưa có rìu"}
+            🪓 {resources.hasAxe ? toolNameVi : `Chưa có ${toolNameVi}`}
           </span>
           <span className="text-slate-600">•</span>
           <span
@@ -48,7 +61,7 @@ export default function GameHud({
                 : "text-slate-400"
             }
           >
-            🗝️ {resources.hasGateKey ? "Chìa Khóa Cổng" : "Chưa có khóa"}
+            🗝️ {resources.hasGateKey ? keyNameVi : "Chưa có khóa"}
           </span>
         </div>
       </div>

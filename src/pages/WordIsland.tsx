@@ -20,6 +20,8 @@ export default function WordIsland() {
     dialogue,
     activeQuiz,
     setActiveQuiz,
+    currentQuest,
+    theme,
     handleRestart,
     handleInteract,
     getObjectiveText,
@@ -50,6 +52,8 @@ export default function WordIsland() {
           <GameHud
             resources={resources}
             objectiveText={getObjectiveText()}
+            toolNameVi={theme.toolNameVi}
+            realmTitle={theme.realmTitle}
             onInteract={handleInteract}
           />
 
@@ -74,11 +78,14 @@ export default function WordIsland() {
 
           {/* Victory Modal */}
           {questStage === 'VICTORY' && (
-            <VictoryOverlay onRestart={handleRestart} />
+            <VictoryOverlay
+              words={currentQuest.words}
+              theme={theme}
+              onRestart={handleRestart}
+            />
           )}
         </div>
       </main>
     </div>
   );
 }
-

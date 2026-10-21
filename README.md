@@ -16,7 +16,7 @@ Mục tiêu cốt lõi của dự án là xây dựng một lộ trình học t�
 | :--------------- | :--------------------------------------------------------------------------- | :-------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Daily Learn**  | [`src/app/daily-learn/README.md`](src/app/daily-learn/README.md)             | ✅ Hoàn thiện         | Luồng học 3 bước (Word ➔ Phrase ➔ Sentence), bài tập trắc nghiệm ngữ cảnh, cơ chế Review Mistakes và thuật toán lặp lại ngắt quãng SRS.          |
 | **Word Blaster** | [`src/app/game/word-blaster/README.md`](src/app/game/word-blaster/README.md) | ✅ Hoàn thiện 100%    | Game Arcade Typing Shooter: Bắn nổ từ vựng đang rơi bằng tốc độ gõ phím, tia laser khóa mục tiêu động, hệ số nhân Combo và âm thanh Web Audio.   |
-| **Word Island**  | [`src/app/game/word-island/README.md`](src/app/game/word-island/README.md)   | ✅ Core Gameplay Loop | Game RPG 2D Pixel-art: Khám phá hoang đảo trên Canvas thời gian thực, chặt cây đập đá sinh tồn, hội thoại NPC và giải đố từ vựng mở Cổng Cổ Đại. |
+| **Word Island**  | [`src/app/game/word-island/README.md`](src/app/game/word-island/README.md)   | ✅ Hoàn thiện 100% | Game RPG 2D Pixel-art: Khám phá hoang đảo trên Canvas thời gian thực, chặt cây đập đá sinh tồn, hội thoại NPC và giải đố từ vựng mở Cổng Cổ Đại. |
 
 ---
 

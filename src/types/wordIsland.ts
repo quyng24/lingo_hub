@@ -51,7 +51,47 @@ export interface VocabQuestion {
   contextVi: string;
   question: string;
   hintVi: string;
+  wordId?: string;
+  word?: string;
   options: VocabQuestionOption[];
+}
+
+export interface QuestWordInfo {
+  id: string;
+  word: string;
+  pronunciation: string;
+  partOfSpeech: string;
+  meanings: string[];
+  exampleSentence?: string;
+  exampleTranslation?: string;
+  difficulty?: string;
+}
+
+export interface IslandTheme {
+  id: string;
+  name: string;
+  realmTitle: string;
+  mentorName: string;
+  mentorRole: string;
+  introStoryEn: string;
+  introStoryVi: string;
+  toolNameEn: string;
+  toolNameVi: string;
+  chestNameEn: string;
+  chestNameVi: string;
+  gateNameEn: string;
+  gateNameVi: string;
+}
+
+export interface DynamicQuest {
+  theme: IslandTheme;
+  words: QuestWordInfo[];
+  puzzles: {
+    act1_intro: VocabQuestion[];
+    act2_craft: VocabQuestion[];
+    act3_chest: VocabQuestion[];
+    act4_gate: VocabQuestion[];
+  };
 }
 
 export interface DialogueChoice {
@@ -101,4 +141,3 @@ export interface GameEngineState {
   overlayOpen: boolean;
   paused: boolean;
 }
-

@@ -9,7 +9,6 @@ import {
   MAP_COLS,
   MAP_ROWS,
   TILE_SIZE,
-  VOCAB_PUZZLES,
 } from '@/utils/wordIslandData';
 import { renderGameScene } from '@/utils/wordIslandRenderer';
 
@@ -21,6 +20,8 @@ export function useWordIsland() {
   const isPaused = useWordIslandStore((s) => s.isPaused);
   const dialogue = useWordIslandStore((s) => s.dialogue);
   const activeQuiz = useWordIslandStore((s) => s.activeQuiz);
+  const currentQuest = useWordIslandStore((s) => s.currentQuest);
+  const loadNewQuest = useWordIslandStore((s) => s.loadNewQuest);
 
   const setQuestStage = useWordIslandStore((s) => s.setQuestStage);
   const setResources = useWordIslandStore((s) => s.setResources);
@@ -28,6 +29,8 @@ export function useWordIsland() {
   const setDialogue = useWordIslandStore((s) => s.setDialogue);
   const setActiveQuiz = useWordIslandStore((s) => s.setActiveQuiz);
   const resetGame = useWordIslandStore((s) => s.resetGame);
+
+  const theme = currentQuest.theme;
 
   // Mutable 60fps loop state
   const gameRef = useRef<GameEngineState>({
@@ -50,6 +53,24 @@ export function useWordIsland() {
     overlayOpen: false,
     paused: false,
   });
+
+  // Load new dynamic quest on mount if not loaded yet
+  useEffect(() => {
+    loadNewQuest();
+  }, [loadNewQuest]);
+
+  // Update object labels according to active theme
+  useEffect(() => {
+    gameRef.current.objects.forEach((obj) => {
+      if (obj.type === 'npc') {
+        obj.label = `${theme.mentorName} (${theme.mentorRole})`;
+      } else if (obj.type === 'chest') {
+        obj.label = theme.chestNameVi;
+      } else if (obj.type === 'gate') {
+        obj.label = theme.gateNameVi;
+      }
+    });
+  }, [theme]);
 
   // Sync store flags into ref for 60fps loop
   useEffect(() => {
@@ -77,7 +98,7 @@ export function useWordIsland() {
     });
   }, []);
 
-  // Clean Restart
+  // Clean Restart with a fresh dynamic quest
   const handleRestart = useCallback(() => {
     gameRef.current.player = {
       x: 9.5 * TILE_SIZE,
@@ -95,7 +116,8 @@ export function useWordIsland() {
     gameRef.current.shakeTime = 0;
 
     resetGame();
-  }, [resetGame]);
+    loadNewQuest();
+  }, [resetGame, loadNewQuest]);
 
   // Interaction dispatcher
   const handleInteract = useCallback(() => {
@@ -124,7 +146,12 @@ export function useWordIsland() {
         updated.stone >= 2
       ) {
         setQuestStage('CRAFT_PUZZLE');
-        spawnFloatingText(state.player.x, state.player.y - 16, 'Đã đủ nguyên liệu! Hãy gặp Minh!', '#fde047');
+        spawnFloatingText(
+          state.player.x,
+          state.player.y - 16,
+          `Đã đủ nguyên liệu! Hãy gặp ${theme.mentorName}!`,
+          '#fde047'
+        );
       }
       return;
     }
@@ -148,7 +175,12 @@ export function useWordIsland() {
         updated.stone >= 2
       ) {
         setQuestStage('CRAFT_PUZZLE');
-        spawnFloatingText(state.player.x, state.player.y - 16, 'Đã đủ nguyên liệu! Hãy gặp Minh!', '#fde047');
+        spawnFloatingText(
+          state.player.x,
+          state.player.y - 16,
+          `Đã đủ nguyên liệu! Hãy gặp ${theme.mentorName}!`,
+          '#fde047'
+        );
       }
       return;
     }
@@ -159,24 +191,38 @@ export function useWordIsland() {
       return;
     }
 
-    // 4. NPC Captain Minh
+    // 4. NPC Mentor Interaction
     if (target.type === 'npc') {
       state.keys = {};
       if (state.questStage === 'TALK_TO_NPC') {
         setDialogue({
-          speaker: 'Captain Minh (Thuyền trưởng Minh)',
-          en: 'Welcome to Word Island! A storm broke my shelter. Please collect 3 Wood from trees and 2 Stone from rocks so we can repair the camp and craft an axe!',
-          vi: 'Chào mừng đến Đảo Từ Vựng! Cơn bão đã làm hỏng nơi trú ẩn của tôi. Hãy thu thập 3 Gỗ (Wood) từ cây và 2 Đá (Stone) từ tảng đá để sửa trại và chế tạo rìu nhé!',
+          speaker: `${theme.mentorName} (${theme.mentorRole})`,
+          en: theme.introStoryEn,
+          vi: theme.introStoryVi,
           choices: [
             {
-              label: "I'll gather 3 Wood & 2 Stone! (Nhận nhiệm vụ)",
+              label: 'Bắt đầu thử thách khởi động! (Start Trial)',
               action: () => {
                 setDialogue(null);
-                if (state.resources.wood >= 3 && state.resources.stone >= 2) {
-                  setQuestStage('CRAFT_PUZZLE');
-                } else {
-                  setQuestStage('GATHER_RESOURCES');
-                }
+                setActiveQuiz({
+                  questions: currentQuest.puzzles.act1_intro,
+                  currentIndex: 0,
+                  selectedFeedback: null,
+                  onComplete: () => {
+                    if (state.resources.wood >= 3 && state.resources.stone >= 2) {
+                      setQuestStage('CRAFT_PUZZLE');
+                    } else {
+                      setQuestStage('GATHER_RESOURCES');
+                    }
+                    setActiveQuiz(null);
+                    spawnFloatingText(
+                      state.player.x,
+                      state.player.y - 16,
+                      'Nhiệm vụ: Thu thập 3 Gỗ & 2 Đá!',
+                      '#38bdf8'
+                    );
+                  },
+                });
               },
             },
           ],
@@ -186,12 +232,12 @@ export function useWordIsland() {
           setQuestStage('CRAFT_PUZZLE');
         } else {
           setDialogue({
-            speaker: 'Captain Minh (Thuyền trưởng Minh)',
-            en: `I still need 3 Wood and 2 Stone to repair my shelter. You currently have ${state.resources.wood}/3 Wood and ${state.resources.stone}/2 Stone.`,
-            vi: `Tôi vẫn cần 3 Gỗ và 2 Đá để sửa nơi trú ẩn. Bạn hiện có ${state.resources.wood}/3 Gỗ và ${state.resources.stone}/2 Đá. Hãy ấn [E] gần cây và tảng đá nhé!`,
+            speaker: `${theme.mentorName} (${theme.mentorRole})`,
+            en: `We still need 3 Wood and 2 Stone to forge the ${theme.toolNameEn}. You currently have ${state.resources.wood}/3 Wood and ${state.resources.stone}/2 Stone.`,
+            vi: `Tôi vẫn cần 3 Gỗ và 2 Đá để chế tạo ${theme.toolNameVi}. Bạn hiện có ${state.resources.wood}/3 Gỗ và ${state.resources.stone}/2 Đá. Hãy ấn [E] gần cây và tảng đá nhé!`,
             choices: [
               {
-                label: 'Got it, still gathering! (Tiếp tục thu thập)',
+                label: 'Tôi sẽ tiếp tục thu thập! (Understood)',
                 action: () => setDialogue(null),
               },
             ],
@@ -199,16 +245,16 @@ export function useWordIsland() {
         }
       } else if (state.questStage === 'CRAFT_PUZZLE') {
         setDialogue({
-          speaker: 'Captain Minh (Thuyền trưởng Minh)',
-          en: 'Great job bringing the wood and stone! Answer my two English vocabulary questions so we can repair the shelter and craft your Stone Axe.',
-          vi: 'Tuyệt lắm, bạn đã mang đủ gỗ và đá! Hãy trả lời 2 câu hỏi từ vựng tiếng Anh để sửa nơi trú ẩn và chế tạo Rìu Đá nhé.',
+          speaker: `${theme.mentorName} (${theme.mentorRole})`,
+          en: `Great job bringing the wood and stone! Answer these two English vocabulary questions so we can forge the ${theme.toolNameEn}!`,
+          vi: `Tuyệt lắm, bạn đã mang đủ gỗ và đá! Hãy trả lời 2 câu hỏi từ vựng để hoàn thiện ${theme.toolNameVi} nhé.`,
           choices: [
             {
-              label: 'Start Vocabulary Challenge (Bắt đầu trả lời)',
+              label: `Bắt đầu giải đố chế tạo ${theme.toolNameVi}`,
               action: () => {
                 setDialogue(null);
                 setActiveQuiz({
-                  questions: VOCAB_PUZZLES.craft_axe,
+                  questions: currentQuest.puzzles.act2_craft,
                   currentIndex: 0,
                   selectedFeedback: null,
                   onComplete: () => {
@@ -222,7 +268,12 @@ export function useWordIsland() {
                     setResources(updated);
                     setQuestStage('UNLOCK_CHEST');
                     setActiveQuiz(null);
-                    spawnFloatingText(state.player.x, state.player.y - 16, 'Nhận Rìu Đá! (Obtained Stone Axe)', '#38bdf8');
+                    spawnFloatingText(
+                      state.player.x,
+                      state.player.y - 16,
+                      `Nhận ${theme.toolNameVi}!`,
+                      '#38bdf8'
+                    );
                   },
                 });
               },
@@ -231,14 +282,14 @@ export function useWordIsland() {
         });
       } else {
         setDialogue({
-          speaker: 'Captain Minh (Thuyền trưởng Minh)',
+          speaker: `${theme.mentorName} (${theme.mentorRole})`,
           en: state.resources.hasGateKey
-            ? 'You have the Gate Key! Head north to the Locked Gate and answer the final question to escape!'
-            : 'Use your new Stone Axe on the Supply Chest on the east side of the island!',
+            ? `You have the Gate Key! Head north to the ${theme.gateNameEn} and pass the final boss trial!`
+            : `Use your ${theme.toolNameEn} on the ${theme.chestNameEn} on the east shore!`,
           vi: state.resources.hasGateKey
-            ? 'Bạn đã có Chìa Khóa Cổng! Hãy đi lên phía Bắc tới Cổng Đá và trả lời câu hỏi cuối cùng để thoát khỏi đảo!'
-            : 'Hãy dùng Rìu Đá vừa chế tạo để mở Rương Tiếp Tế ở phía Đông hòn đảo nhé!',
-          choices: [{ label: 'Thanks! (Đóng)', action: () => setDialogue(null) }],
+            ? `Bạn đã có Chìa Khóa! Hãy đi lên phía Bắc tới ${theme.gateNameVi} và vượt qua thử thách cuối cùng để thoát hiểm!`
+            : `Hãy dùng ${theme.toolNameVi} vừa chế tạo để mở ${theme.chestNameVi} ở phía Đông hòn đảo nhé!`,
+          choices: [{ label: 'Đã hiểu! (Đóng)', action: () => setDialogue(null) }],
         });
       }
       return;
@@ -253,16 +304,21 @@ export function useWordIsland() {
       }
       if (!state.resources.hasAxe) {
         setDialogue({
-          speaker: 'Supply Chest (Rương Tiếp Tế)',
-          en: 'Thick vines cover this chest. You need an AXE from Captain Minh to cut them!',
-          vi: 'Dây leo dày đặc quấn quanh chiếc rương này. Bạn cần một chiếc RÌU (Axe) từ Thuyền trưởng Minh để chặt chúng!',
-          choices: [{ label: 'Talk to Captain Minh first (Quay lại)', action: () => setDialogue(null) }],
+          speaker: `${theme.chestNameVi} (${theme.chestNameEn})`,
+          en: `Thick barriers seal this chest. You need the ${theme.toolNameEn} from ${theme.mentorName} to open it!`,
+          vi: `Rào cản dày đặc bao bọc chiếc rương này. Bạn cần ${theme.toolNameVi} từ ${theme.mentorName} để mở!`,
+          choices: [
+            {
+              label: `Quay lại gặp ${theme.mentorName}`,
+              action: () => setDialogue(null),
+            },
+          ],
         });
         return;
       }
 
       setActiveQuiz({
-        questions: VOCAB_PUZZLES.open_chest,
+        questions: currentQuest.puzzles.act3_chest,
         currentIndex: 0,
         selectedFeedback: null,
         onComplete: () => {
@@ -272,7 +328,7 @@ export function useWordIsland() {
           setResources(updated);
           setQuestStage('UNLOCK_GATE');
           setActiveQuiz(null);
-          spawnFloatingText(target.x, target.y - 12, 'Nhận Chìa Khóa & Nhu Yếu Phẩm!', '#facc15');
+          spawnFloatingText(target.x, target.y - 12, 'Nhận Chìa Khóa Cổng & Nhu Yếu Phẩm!', '#facc15');
         },
       });
       return;
@@ -283,16 +339,16 @@ export function useWordIsland() {
       state.keys = {};
       if (!state.resources.hasGateKey) {
         setDialogue({
-          speaker: 'Locked Gate (Cổng Thoát Hiểm)',
-          en: 'The ancient stone gate is locked. Find the Gate Key inside the Supply Chest first!',
-          vi: 'Cánh cổng đá cổ đại đang bị khóa. Hãy tìm Chìa Khóa Cổng bên trong Rương Tiếp Tế trước nhé!',
-          choices: [{ label: 'Step back (Quay lại)', action: () => setDialogue(null) }],
+          speaker: `${theme.gateNameVi} (${theme.gateNameEn})`,
+          en: `The ancient gate is firmly locked. Find the Gate Key inside the ${theme.chestNameEn} first!`,
+          vi: `Cánh cổng đá đang bị khóa chặt. Hãy tìm Chìa Khóa bên trong ${theme.chestNameVi} trước nhé!`,
+          choices: [{ label: 'Quay lại', action: () => setDialogue(null) }],
         });
         return;
       }
 
       setActiveQuiz({
-        questions: VOCAB_PUZZLES.unlock_gate,
+        questions: currentQuest.puzzles.act4_gate,
         currentIndex: 0,
         selectedFeedback: null,
         onComplete: () => {
@@ -303,7 +359,15 @@ export function useWordIsland() {
         },
       });
     }
-  }, [setDialogue, setActiveQuiz, setQuestStage, setResources, spawnFloatingText]);
+  }, [
+    setDialogue,
+    setActiveQuiz,
+    setQuestStage,
+    setResources,
+    spawnFloatingText,
+    theme,
+    currentQuest,
+  ]);
 
   // Keyboard Listeners
   useEffect(() => {
@@ -338,7 +402,7 @@ export function useWordIsland() {
     };
   }, [handleInteract, setIsPaused]);
 
-  // Main 60FPS Game Loop
+  // Main Canvas Game Loop (60fps)
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -348,105 +412,123 @@ export function useWordIsland() {
     let animationFrameId: number;
     let lastTime = performance.now();
 
-    const checkCollision = (nx: number, ny: number, w: number, h: number): boolean => {
-      const corners = [
-        { x: nx + 4, y: ny + 8 },
-        { x: nx + w - 4, y: ny + 8 },
-        { x: nx + 4, y: ny + h - 2 },
-        { x: nx + w - 4, y: ny + h - 2 },
-      ];
+    const isCollidingWithWorld = (
+      px: number,
+      py: number,
+      pw: number,
+      ph: number,
+      objects: WorldObject[]
+    ): boolean => {
+      // 1. Tilemap Water Boundaries
+      const startCol = Math.floor(px / TILE_SIZE);
+      const endCol = Math.floor((px + pw) / TILE_SIZE);
+      const startRow = Math.floor(py / TILE_SIZE);
+      const endRow = Math.floor((py + ph) / TILE_SIZE);
 
-      for (const pt of corners) {
-        const col = Math.floor(pt.x / TILE_SIZE);
-        const row = Math.floor(pt.y / TILE_SIZE);
-        if (row < 0 || row >= MAP_ROWS || col < 0 || col >= MAP_COLS) return true;
-        if (ISLAND_MAP[row][col] === 0) return true;
+      for (let r = startRow; r <= endRow; r++) {
+        for (let c = startCol; c <= endCol; c++) {
+          if (r < 0 || r >= MAP_ROWS || c < 0 || c >= MAP_COLS) return true;
+          if (ISLAND_MAP[r][c] === 0) return true;
+        }
       }
 
-      for (const obj of gameRef.current.objects) {
+      // 2. Solid World Objects
+      for (const obj of objects) {
         if (!obj.solid) continue;
+        const boxX = obj.x + 4;
+        const boxY = obj.y + obj.height * 0.4;
+        const boxW = obj.width - 8;
+        const boxH = obj.height * 0.6;
+
         if (
-          nx + 4 < obj.x + obj.width - 4 &&
-          nx + w - 4 > obj.x + 4 &&
-          ny + 6 < obj.y + obj.height - 4 &&
-          ny + h - 2 > obj.y + 4
+          px < boxX + boxW &&
+          px + pw > boxX &&
+          py < boxY + boxH &&
+          py + ph > boxY
         ) {
           return true;
         }
       }
-
       return false;
     };
 
     const update = (dt: number, now: number) => {
       const state = gameRef.current;
 
-      // Respawn depleted trees & rocks
-      for (const obj of state.objects) {
+      // Handle Respawn of Trees/Rocks
+      state.objects.forEach((obj) => {
         if (obj.depleted && obj.respawnAt && now >= obj.respawnAt) {
           obj.depleted = false;
           obj.solid = true;
           obj.respawnAt = undefined;
         }
-      }
+      });
 
-      if (state.overlayOpen || state.paused) return;
+      // Player Movement when overlays are closed
+      if (!state.overlayOpen && !state.paused) {
+        const { keys, player } = state;
+        let dx = 0;
+        let dy = 0;
 
-      // Movement vector
-      let dx = 0;
-      let dy = 0;
-      if (state.keys['w'] || state.keys['arrowup']) dy -= 1;
-      if (state.keys['s'] || state.keys['arrowdown']) dy += 1;
-      if (state.keys['a'] || state.keys['arrowleft']) dx -= 1;
-      if (state.keys['d'] || state.keys['arrowright']) dx += 1;
+        if (keys['w'] || keys['arrowup']) dy -= 1;
+        if (keys['s'] || keys['arrowdown']) dy += 1;
+        if (keys['a'] || keys['arrowleft']) dx -= 1;
+        if (keys['d'] || keys['arrowright']) dx += 1;
 
-      if (dx !== 0 || dy !== 0) {
-        const len = Math.hypot(dx, dy);
-        dx /= len;
-        dy /= len;
+        if (dx !== 0 && dy !== 0) {
+          dx *= 0.7071;
+          dy *= 0.7071;
+        }
 
-        if (Math.abs(dx) > Math.abs(dy)) {
-          state.player.dir = dx > 0 ? 'right' : 'left';
+        if (dx !== 0 || dy !== 0) {
+          if (Math.abs(dx) > Math.abs(dy)) {
+            player.dir = dx > 0 ? 'right' : 'left';
+          } else {
+            player.dir = dy > 0 ? 'down' : 'up';
+          }
+
+          player.walkFrame += dt * 8;
+
+          const newX = player.x + dx * player.speed * dt;
+          if (!isCollidingWithWorld(newX, player.y, player.width, player.height, state.objects)) {
+            player.x = newX;
+          }
+
+          const newY = player.y + dy * player.speed * dt;
+          if (!isCollidingWithWorld(player.x, newY, player.width, player.height, state.objects)) {
+            player.y = newY;
+          }
         } else {
-          state.player.dir = dy > 0 ? 'down' : 'up';
+          player.walkFrame = 0;
         }
-
-        const nextX = state.player.x + dx * state.player.speed * dt;
-        const nextY = state.player.y + dy * state.player.speed * dt;
-
-        if (!checkCollision(nextX, state.player.y, state.player.width, state.player.height)) {
-          state.player.x = nextX;
-        }
-        if (!checkCollision(state.player.x, nextY, state.player.width, state.player.height)) {
-          state.player.y = nextY;
-        }
-
-        state.player.walkFrame += dt * 10;
-      } else {
-        state.player.walkFrame = 0;
       }
 
-      // Find nearest interactable object
-      const px = state.player.x + state.player.width / 2;
-      const py = state.player.y + state.player.height / 2;
+      // Proximity detection for interaction
       let closest: WorldObject | null = null;
-      let minDist = 58;
+      let closestDist = Infinity;
+      const interactDist = 48;
+
+      const pCenter = {
+        x: state.player.x + state.player.width / 2,
+        y: state.player.y + state.player.height / 2,
+      };
 
       for (const obj of state.objects) {
-        if (obj.depleted) continue;
-        const ox = obj.x + obj.width / 2;
-        const oy = obj.y + obj.height / 2;
-        const dist = Math.hypot(px - ox, py - oy);
-        if (dist < minDist) {
-          minDist = dist;
+        const oCenter = {
+          x: obj.x + obj.width / 2,
+          y: obj.y + obj.height / 2,
+        };
+        const dist = Math.hypot(pCenter.x - oCenter.x, pCenter.y - oCenter.y);
+        if (dist < interactDist && dist < closestDist) {
           closest = obj;
+          closestDist = dist;
         }
       }
       state.nearestObject = closest;
 
-      // Update floating texts
+      // Update Floating Particles
       state.floatingTexts.forEach((ft) => {
-        ft.y -= 28 * dt;
+        ft.y -= 25 * dt;
         ft.alpha -= 0.75 * dt;
       });
       state.floatingTexts = state.floatingTexts.filter((ft) => ft.alpha > 0);
@@ -471,17 +553,17 @@ export function useWordIsland() {
   const getObjectiveText = () => {
     switch (questStage) {
       case 'TALK_TO_NPC':
-        return '1. Gặp Thuyền trưởng Minh cạnh lửa trại [E]';
+        return `1. Gặp ${theme.mentorName} cạnh lửa trại [E] để bắt đầu`;
       case 'GATHER_RESOURCES':
         return `2. Thu thập 3 Gỗ (${resources.wood}/3) & 2 Đá (${resources.stone}/2)`;
       case 'CRAFT_PUZZLE':
-        return '3. Quay lại gặp Minh sửa trại & chế tạo Rìu Đá';
+        return `3. Quay lại gặp ${theme.mentorName} chế tạo ${theme.toolNameVi}`;
       case 'UNLOCK_CHEST':
-        return '4. Dùng Rìu chặt dây leo mở Rương Tiếp Tế ở bờ biển Đông';
+        return `4. Dùng ${theme.toolNameVi} mở ${theme.chestNameVi} ở bờ biển Đông`;
       case 'UNLOCK_GATE':
-        return '5. Dùng Chìa Khóa giải đố mở Cổng Cổ Đại phía Bắc để thoát!';
+        return `5. Tra chìa khóa giải đố mở ${theme.gateNameVi} phía Bắc để thoát!`;
       case 'VICTORY':
-        return 'Đã hoàn thành! Bạn đã chinh phục Đảo Từ Vựng!';
+        return `Chiến thắng! Bạn đã chinh phục ${theme.realmTitle}!`;
     }
   };
 
@@ -496,9 +578,10 @@ export function useWordIsland() {
     dialogue,
     activeQuiz,
     setActiveQuiz,
+    currentQuest,
+    theme,
     handleRestart,
     handleInteract,
     getObjectiveText,
   };
 }
-

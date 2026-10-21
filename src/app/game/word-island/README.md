@@ -1,81 +1,90 @@
-# Game Module: Word Island (2D Pixel-art Survival RPG)
+# Game Module: Word Island (2D Pixel-art Survival RPG & Dynamic Narrative)
 
-**Word Island** là tựa game nhập vai phiêu lưu sinh tồn góc nhìn từ trên xuống (Top-down 2D Pixel-art RPG), nơi người chơi dạt vào một hòn đảo bí ẩn hoang vu, phải khai thác tài nguyên sinh tồn, hỗ trợ thuyền trưởng gặp nạn và giải các câu đố từ vựng cổ xưa để sửa thuyền trở về đất liền.
+**Word Island** là tựa game nhập vai phiêu lưu sinh tồn góc nhìn từ trên xuống (Top-down 2D Pixel-art RPG). Người chơi vào vai một Nhà thám hiểm dạt vào các quần đảo bí ẩn, phải khai thác tài nguyên thiên nhiên, hỗ trợ các NPC dẫn đường và giải mã các câu đố ngữ cảnh tiếng Anh qua **Mạch truyện 4 Hồi** để mở Cổng Cổ Đại và chinh phục hòn đảo.
+
+Toàn bộ kịch bản, lời thoại NPC và câu hỏi trong game được **tự động sinh động từ kho dữ liệu 500 từ vựng và ngân hàng câu hỏi trắc nghiệm** trên cơ sở dữ liệu Supabase, mang lại giá trị học tập thực tế và khả năng chơi lại vô hạn (infinite replayability).
 
 ---
 
 ## Trạng thái hiện tại (Status)
 
-- **Trạng thái**: ✅ **Đã hoàn thiện vòng lặp lối chơi cốt lõi (Core Gameplay Loop Playable)**.
-- **Nền tảng tối ưu**: Desktop / Laptop (sử dụng phím `WASD` hoặc Mũi tên & phím `[E]` để tương tác).
-- **Trải nghiệm**: Canvas đồ họa 2D thời gian thực với tỷ lệ khung hình 20:14 chuẩn mực retro (`800x560` resolution, phong cách pixelated).
+- **Trạng thái**: ✅ **Hoàn thiện 100% Logic Trò chơi & Cốt truyện Nhiệm vụ Động (Full Dynamic Quest Loop Playable)**.
+- **Nền tảng tối ưu**: Desktop / Laptop (sử dụng phím `WASD` hoặc Mũi tên & phím `[E]` / `Space` để tương tác).
+- **Tích hợp dữ liệu thật**: Tự động kết nối bảng `vocabulary`, `topic_vocabulary`, `exercise_questions` trên Supabase để bốc ngẫu nhiên 7 từ vựng và 7 câu hỏi ngữ cảnh mỗi ván chơi.
+- **Offline / Fallback Resilience**: Tích hợp sẵn `DEFAULT_FALLBACK_QUEST` với 7 từ vựng chuẩn chỉnh, đảm bảo game tải ngay lập tức kể cả khi mạng chậm hoặc người dùng chưa đăng nhập.
+- **Phát âm đàm thoại**: Màn hình Victory tích hợp Web Speech Synthesis API hỗ trợ nghe phát âm chuẩn Anh - Mỹ cho toàn bộ từ vựng đã học.
 
 ---
 
-## Vòng lặp lối chơi (Core Gameplay Loop)
+## 8 Quần đảo & Cốt truyện theo Chủ đề (The 8 Island Realms)
+
+Mỗi lần bắt đầu chơi hoặc bấm **"Khám phá hòn đảo mới"**, hệ thống sẽ tự động ngẫu nhiên chọn 1 trong các quần đảo chủ đề:
+
+| Mã Chủ Đề | Tên Quần Đảo (Realm) | NPC Dẫn Đường | Bối Cảnh & Nguy Cơ | Công Cụ Chế Tác | Cổng Thoát Hiểm |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`animals`** | **Đảo Sinh Tồn Muông Thú**<br/>*(Fauna Sanctuary)* | **Kiểm lâm Hải**<br/>*(Wildlife Ranger)* | Bão lớn phá hỏng hàng rào trạm bảo tồn. Thu thập vật liệu, tìm hiểu tập tính muông thú để sửa chữa trạm an toàn. | **Móc Cứu Hộ Động Vật**<br/>*(Rescue Hook)* | **Cổng Bảo Tồn An Toàn** |
+| **`tech`** | **Quần Đảo Cơ Khí**<br/>*(Cyber Atoll)* | **Kỹ sư Echo**<br/>*(AI Systems Engineer)* | Sự cố điện áp cô lập máy chủ trạm chuyển tiếp. Thu thập linh kiện và giải mã câu lệnh máy tính để tái khởi động mạng lõi. | **Mỏ Hàn Laser**<br/>*(Laser Solder Tool)* | **Cổng Tường Lửa Bảo Mật** |
+| **`space`** | **Vùng Đất Tinh Cầu**<br/>*(Astral Reef)* | **Nhà Thiên văn Orion**<br/>*(Cosmic Explorer)* | Mảnh thiên thạch vũ trụ làm hỏng đèn dẫn đường quỹ đạo. Thu thập khoáng thạch và giải mã thuật ngữ thiên văn. | **Cuốc Khai Khoáng Lượng Tử**<br/>*(Quantum Pickaxe)* | **Cổng Dịch Chuyển Ngân Hà** |
+| **`weather`** | **Đảo Bão Tố Vĩnh Cửu**<br/>*(Tempest Haven)* | **Nhà Khí tượng Phong**<br/>*(Storm Chaser)* | Áp suất khí quyển giảm mạnh báo hiệu lốc xoáy. Thu thập gỗ đá gia cố và làm chủ từ vựng thời tiết để kích hoạt trạm khí tượng. | **Rìu Gia Cố Bão**<br/>*(Storm Cleaver Axe)* | **Cổng Trạm Khí Tượng Cổ** |
+| **`sports`** | **Đấu Trường Dũng Giả**<br/>*(Champion's Shore)* | **Huấn luyện viên Hùng**<br/>*(Master Coach)* | Thao trường rèn luyện của các nhà vô địch. Vượt qua thử thách thể lực và làm chủ từ vựng thể thao để chứng minh bản lĩnh. | **Búa Rèn Luyện Thể Lực**<br/>*(Athletic Hammer)* | **Cổng Đấu Trường Đỉnh Cao** |
+| **`action`** | **Mỏm Đá Hành Động**<br/>*(Action Ridge)* | **Đội trưởng Thép**<br/>*(Frontier Captain)* | Địa hình hiểm trở đòi hỏi quyết định dứt khoát. Thu thập nguyên liệu, vượt vách đá và làm chủ các động từ hành động mạnh mẽ. | **Rìu Dã Ngoại Chiến Thuật**<br/>*(Tactical Camp Axe)* | **Cổng Tiền Đồn Phòng Thủ** |
+| **`emotions`** | **Ốc Đảo Tâm Thức**<br/>*(Whispering Oasis)* | **Hiền giả Thu**<br/>*(Guardian of Harmony)* | Cột đá tâm linh bị vây quanh bởi năng lượng bất an. Thấu hiểu cảm xúc, giải mã câu đố để trả lại sự bình yên cho ốc đảo. | **Trượng Khai Sáng Tâm Thức**<br/>*(Staff of Clarity)* | **Cổng Tâm Thức Bình Yên** |
+| **`default`** | **Đảo Sinh Tồn Bí Ẩn**<br/>*(Mysterious Word Island)* | **Thuyền trưởng Minh**<br/>*(Island Survivor)* | Tàu thám hiểm bị đắm dạt vào hoang đảo. Thu thập gỗ đá, chế tạo công cụ sinh tồn và giải mã cổ ngữ để thoát khỏi đảo. | **Rìu Đá Sinh Tồn**<br/>*(Stone Survival Axe)* | **Cổng Đá Cổ Đại** |
+
+---
+
+## Mạch truyện 4 Hồi trong mỗi ván chơi (4-Act Quest Loop)
+
+Mỗi ván chơi sẽ chọn ra đúng **7 từ vựng** và phân bổ đều đặn vào 4 giai đoạn nhiệm vụ kịch tính:
 
 ```mermaid
 flowchart TD
-    A["Tỉnh dậy trên bãi biển hoang đảo"] --> B["Di chuyển tự do (WASD / Phím mũi tên)"]
-    B --> C["Khai thác tài nguyên trên đảo: Chặt cây (Gỗ), Đập đá (Đá), Nhặt quả (Thức ăn)"]
-    C --> D["Tìm thấy Campfire & Gặp NPC Thuyền trưởng Minh"]
-    D --> E["Hội thoại RPG: Nhận nhiệm vụ sửa thuyền buồm"]
-    E --> F["Khám phá phía Bắc đảo: Gặp Cổng Cổ Đại (Ancient Gate) & Rương báu"]
-    F --> G["Kích hoạt Thử thách từ vựng (QuizOverlay)"]
-    G --> H{"Trả lời đúng câu đố tiếng Anh?"}
-    H -- Đúng --> I["Giải mã phong ấn: Cổng mở ra & Rương báu mở"]
-    H -- Sai --> G
-    I --> J["Thu thập đủ vật liệu sửa thuyền (Wood, Stone)"]
-    J --> K["Hoàn thành nhiệm vụ: Màn hình Chiến thắng (VictoryOverlay)"]
+    Start["Bắt đầu game: Tải 7 từ vựng động từ Supabase"] --> Act1["Hồi 1: Gặp NPC Dẫn đường tại Lửa trại"]
+    Act1 --> Q1["Giải 1 câu hỏi khởi động (Foundation Word)"]
+    Q1 --> Act2["Hồi 2: Khai thác tài nguyên trên đảo"]
+    Act2 --> Res["Thu thập 3 Gỗ (Trees) + 2 Đá (Rocks)"]
+    Res --> Q2["Quay lại NPC: Giải 2 câu hỏi để Chế tạo Công cụ"]
+    Q2 --> Tool["Nhận Công cụ đặc trưng (Axe / Solder / Staff,...)"]
+    Tool --> Act3["Hồi 3: Khám phá Rương Tiếp Tế ở bờ biển Đông"]
+    Act3 --> Q3["Dùng Công cụ mở rương: Giải 2 câu hỏi mật mã"]
+    Q3 --> Key["Nhận Chìa Khóa Cổng & Nhu yếu phẩm"]
+    Key --> Act4["Hồi 4: Tiến lên Cổng Đá ở phía Bắc"]
+    Act4 --> Q4["Tra Chìa Khóa: Giải 2 câu hỏi Thử thách Trùm"]
+    Q4 --> Victory["Cổng rumbles mở toang ➔ Màn hình Khải hoàn (Victory)"]
+    Victory --> Audio["Nghe phát âm chuẩn 7 từ vựng bằng Web Speech API"]
+    Victory --> Replay["Bấm 'Khám phá hòn đảo mới' ➔ Tải 7 từ vựng mới"]
 ```
 
----
+### Chi tiết 4 Hồi:
 
-## Các cơ chế gameplay chi tiết
+1. **Hồi 1: Tiếp Đất & Gặp Nhân Vật Dẫn Đường (`TALK_TO_NPC`)**:
+   - Người chơi tiếp cận NPC dẫn đường tại lửa trại trung tâm.
+   - NPC giới thiệu bối cảnh nguy cơ của hòn đảo (song ngữ Anh - Việt).
+   - Thử thách 1: Người chơi trả lời **1 câu hỏi trắc nghiệm ngữ cảnh khởi động** (`act1_intro`).
+   - Hoàn thành: NPC giao nhiệm vụ thu thập nguyên liệu trên đảo.
 
-### 1. Đồ họa Pixel-Art & Rendering Engine
+2. **Hồi 2: Khai Thác Tài Nguyên & Chế Tạo Công Cụ (`GATHER_RESOURCES` ➔ `CRAFT_PUZZLE`)**:
+   - Người chơi di chuyển quanh đảo, ấn `[E]` để chặt cây (thu thập 3 Gỗ) và đập đá (thu thập 2 Đá).
+   - Tên tài nguyên song ngữ bay lên sinh động (`+1 Wood (Gỗ)`, `+1 Stone (Đá)`).
+   - Mang đủ 3 Gỗ + 2 Đá về gặp NPC: NPC kích hoạt thử thách chế tạo gồm **2 câu hỏi trắc nghiệm ngữ cảnh** (`act2_craft`).
+   - Hoàn thành: Chế tạo thành công công cụ đặc trưng của chủ đề (ví dụ: *Móc Cứu Hộ*, *Mỏ Hàn Laser*, *Rìu Đá*).
 
-- Thế giới trò chơi được xây dựng trên ma trận ô vuông (Tilemap $20 \times 14$ ô, mỗi ô $40 \times 40$ px).
-- Hệ thống địa hình đa dạng: Vùng biển sâu cản đường (`Water`), bờ cát vàng (`Sand`), thảm cỏ xanh (`Grass`), và đường mòn đất (`Dirt Path`).
-- Bộ dựng đồ họa Canvas thời gian thực (`src/utils/wordIslandRenderer.ts`) sử dụng `requestAnimationFrame`, tối ưu hóa hiệu năng render mượt mà 60 FPS.
+3. **Hồi 3: Giải Mã Rương Tiếp Tế Cổ Đại (`UNLOCK_CHEST`)**:
+   - Người chơi di chuyển sang bờ biển phía Đông để tiếp cận Rương Tiếp Tế.
+   - Nếu chưa có công cụ chế tạo, rương sẽ nhắc nhở cần quay lại gặp NPC.
+   - Khi có công cụ, rương kích hoạt thử thách gồm **2 câu hỏi trắc nghiệm ngữ cảnh** (`act3_chest`).
+   - Hoàn thành: Rương mở ra, trao **Chìa Khóa Cổng** và nhu yếu phẩm cho người chơi.
 
-### 2. Điều khiển nhân vật & Hệ thống va chạm (Collision Detection)
+4. **Hồi 4: Thử Thách Trùm Tại Cổng Đá & Thoát Khỏi Đảo (`UNLOCK_GATE` ➔ `VICTORY`)**:
+   - Người chơi di chuyển lên vòm đá phía Bắc hòn đảo.
+   - Tra Chìa Khóa Cổng vào ổ: Cổng cổ đại phát sáng những ký tự rực rỡ và kích hoạt thử thách cuối gồm **2 câu hỏi trắc nghiệm tổng hợp** (`act4_gate`).
+   - Hoàn thành: Cổng đá mở ra, nhân vật thoát khỏi đảo thành công!
 
-- Điều khiển nhân vật di chuyển 8 hướng mượt mà với gia tốc bằng cụm phím:
-  - Di chuyển: `W`, `A`, `S`, `D` hoặc các phím mũi tên `↑`, `←`, `↓`, `→`.
-  - Tương tác: Nhấn phím `E` hoặc phím `Space` khi đứng gần vật thể.
-- Hệ thống va chạm dạng Axis-Aligned Bounding Box (AABB) ngăn người chơi đi xuyên qua rặng đá, cây cổ thụ, lều trại hay mép biển.
-
-### 3. Cơ chế Khai thác & Sinh tồn (Resource Gathering)
-
-- Trên đảo bố trí ngẫu nhiên các thực thể tự nhiên có thể tương tác:
-  - **Cây thông / Cây dừa (`Pine Tree`)**: Tiếp cận và tương tác để thu thập **Gỗ (Wood)**.
-  - **Mỏ đá Granite (`Granite Rock`)**: Tiếp cận và khai thác để thu thập **Đá (Stone)**.
-  - **Bụi cây quả dại**: Nhặt quả mọng để bổ sung **Thức ăn (Food)**.
-- Mỗi vật thể sau khi khai thác sẽ cạn kiệt tài nguyên và cập nhật trực tiếp vào hòm đồ (Inventory).
-
-### 4. Hệ thống Hội thoại RPG (`DialogueOverlay`)
-
-- Gặp gỡ NPC **Thuyền trưởng Minh (Captain Minh)** bị đắm tàu tại khu trại lửa giữa đảo.
-- Hộp thoại tương tác phong cách RPG cổ điển với ảnh đại diện nhân vật, dẫn dắt người chơi qua các đoạn hội thoại có phân nhánh và giao nhiệm vụ sửa thuyền.
-
-### 5. Thử thách Giải đố từ vựng (`QuizOverlay`)
-
-- Phía Bắc hòn đảo bị phong ấn bởi **Cổng Cổ Đại (Locked Ancient Gate)** và các **Rương Tiếp Tế (Supply Chest)** bị khóa ma pháp.
-- Để mở khóa, người chơi phải vượt qua thử thách ngôn ngữ:
-  - Các câu hỏi trắc nghiệm kiểm tra từ vựng, ngữ pháp và nghĩa theo ngữ cảnh tiếng Anh.
-  - Giao diện câu đố retro hiển thị các lựa chọn đáp án trực quan; trả lời đúng sẽ giải mã phong ấn, mở toang cánh cổng dẫn sang khu vực mới và mở khóa hòm báu.
-
-### 6. Quản lý nhiệm vụ & Màn hình Chiến thắng (`VictoryOverlay`)
-
-- **HUD thông minh (`GameHud`)**:
-  - Khung Objective Banner hiển thị nhiệm vụ hiện tại (ví dụ: _Thu thập 3 Gỗ_, _Nói chuyện với Thuyền trưởng_, _Mở Cổng Cổ Đại_).
-  - Khung Inventory hiển thị số lượng Gỗ, Đá và Thức ăn hiện có.
-- **Victory Screen**: Khi hoàn tất sửa chữa thuyền buồm và vượt qua cổng thiêng, màn hình chiến thắng hoành tráng sẽ kích hoạt, vinh danh người chơi đã chinh phục thành công Word Island.
-
-### 7. Menu Tạm dừng & Hỗ trợ (`PauseOverlay`, `TopBar`)
-
-- Nhấn phím `Escape` hoặc nút Pause trên thanh `TopBar` để tạm dừng game, tra cứu lại bảng hướng dẫn phím bấm, hoặc chọn Restart để bắt đầu lại hòn đảo mới.
+5. **Màn hình Khải Hoàn (`VictoryOverlay`)**:
+   - Hiển thị danh thiếp của toàn bộ 7 từ vựng đã học trong ván chơi: Từ tiếng Anh, phiên âm quốc tế IPA, từ loại, nghĩa tiếng Việt và câu ví dụ ngữ cảnh.
+   - Tích hợp nút loa 🔊 bấm nghe phát âm tiếng Anh chuẩn (Text-to-Speech) từng từ.
+   - Thống kê EXP thưởng (+70 EXP) và tỷ lệ độ chính xác.
+   - Nút **"↺ Khám phá hòn đảo mới"**: Khởi tạo lại trò chơi và tự động bốc 7 từ vựng mới từ kho dữ liệu.
 
 ---
 
@@ -84,69 +93,108 @@ flowchart TD
 ```text
 src/
 ├── app/game/word-island/
-│   └── page.tsx              # Server Component: Kiểm tra UserAgent, MobileWarning wrapper
+│   ├── page.tsx                  # Server Component: Kiểm tra UserAgent, hiển thị MobileWarning nếu dùng mobile
+│   └── README.md                 # Tài liệu kỹ thuật chi tiết của game Word Island (file này)
 ├── pages/
-│   └── WordIsland.tsx        # Main Game View: Container, quản lý Canvas và Modal overlays
-├── components/word-island/
-│   ├── GameHud.tsx           # HUD hiển thị mục tiêu nhiệm vụ, tài nguyên hòm đồ và nút [E]
-│   ├── DialogueOverlay.tsx   # Modal hội thoại RPG với Thuyền trưởng Minh
-│   ├── QuizOverlay.tsx       # Modal thử thách đố từ vựng để mở cổng/mở rương
-│   ├── VictoryOverlay.tsx    # Màn hình chúc mừng chiến thắng khi sửa xong thuyền
-│   ├── PauseOverlay.tsx      # Menu tạm dừng, hướng dẫn điều khiển & chơi lại
-│   └── TopBar.tsx            # Thanh điều hướng trên cùng (Quay lại, Tạm dừng, Reset)
-├── hooks/
-│   └── useWordIsland.ts      # Game loop, xử lý di chuyển nhân vật, tương tác vật thể
+│   └── WordIsland.tsx            # Main Game View: Container, điều phối Canvas và các Modal Overlay
+├── services/
+│   └── wordIslandService.ts      # Dịch vụ tải 7 từ vựng và câu hỏi từ Supabase, tự sinh nhiệm vụ 4 Hồi
 ├── stores/
-│   └── wordIslandStore.ts    # Zustand store quản lý inventory, quest stage, dialogue, quiz
+│   └── wordIslandStore.ts        # Zustand store: Quản lý quest hiện tại, inventory, dialogue, quiz state
 ├── types/
-│   └── wordIsland.ts         # TypeScript Interfaces: Player, WorldObject, Inventory, Quest
-└── utils/
-    ├── wordIslandRenderer.ts # Bộ vẽ đồ họa Canvas pixel-art 2D (Tilemap, nhân vật, animation)
-    └── wordIslandData.ts     # Ma trận bản đồ đảo (ISLAND_MAP), tọa độ vật thể & câu đố
+│   └── wordIsland.ts             # TypeScript Interfaces: DynamicQuest, IslandTheme, QuestWordInfo, VocabQuestion
+├── utils/
+│   ├── wordIslandThemes.ts       # Định nghĩa 8 Quần đảo chủ đề và bộ DEFAULT_FALLBACK_QUEST
+│   ├── wordIslandRenderer.ts     # Bộ dựng đồ họa Canvas pixel-art 2D (Tilemap, nhân vật, animation, camera)
+│   └── wordIslandData.ts         # Ma trận bản đồ đảo (ISLAND_MAP) và tọa độ các thực thể (INITIAL_OBJECTS)
+├── components/word-island/
+│   ├── GameHud.tsx               # HUD: Hiển thị nhiệm vụ hiện tại, tên công cụ, tên đảo và hòm đồ
+│   ├── DialogueOverlay.tsx       # Hộp thoại RPG song ngữ Anh - Việt với NPC
+│   ├── QuizOverlay.tsx           # Modal trắc nghiệm ngữ cảnh (câu hỏi chứa ____, 4 lựa chọn, giải thích)
+│   ├── VictoryOverlay.tsx        # Màn hình chiến thắng hiển thị 7 từ vựng, nút nghe phát âm và nút chơi lại
+│   ├── PauseOverlay.tsx          # Menu tạm dừng, hướng dẫn phím bấm
+│   └── TopBar.tsx                # Thanh điều hướng trên cùng (Quay lại, Tạm dừng, Chơi lại)
+└── hooks/
+    └── useWordIsland.ts          # Game loop 60 FPS, xử lý va chạm AABB, di chuyển và tương tác thực thể
 ```
 
 ---
 
-## Data Models chính
+## Data Models chi tiết
 
 ```typescript
-// Giai đoạn nhiệm vụ chính
-export type QuestStage =
-  | "GATHER_WOOD" // Thu thập gỗ
-  | "TALK_CAPTAIN" // Trò chuyện với Thuyền trưởng Minh
-  | "ANCIENT_GATE" // Giải đố mở Cổng Cổ Đại
-  | "VICTORY"; // Hoàn thành xuất sắc
+// Định nghĩa chủ đề quần đảo
+export interface IslandTheme {
+  id: string;             // 'animals' | 'tech' | 'space' | 'weather' | 'sports' | 'action' | 'emotions' | 'default'
+  name: string;           // Tên tiếng Việt của chủ đề
+  realmTitle: string;     // Tên vùng đất hiển thị trên HUD / Victory
+  mentorName: string;     // Tên NPC dẫn đường (ví dụ: 'Kiểm lâm Hải')
+  mentorRole: string;     // Vai trò NPC (ví dụ: 'Wildlife Ranger')
+  introStoryEn: string;   // Lời thoại mở đầu tiếng Anh
+  introStoryVi: string;   // Lời thoại mở đầu tiếng Việt
+  toolNameEn: string;     // Tên công cụ tiếng Anh
+  toolNameVi: string;     // Tên công cụ tiếng Việt
+  chestNameEn: string;    // Tên rương tiếng Anh
+  chestNameVi: string;    // Tên rương tiếng Việt
+  gateNameEn: string;     // Tên cổng thoát tiếng Anh
+  gateNameVi: string;     // Tên cổng thoát tiếng Việt
+}
 
-// Túi đồ tài nguyên
-export type Inventory = {
-  wood: number; // Số lượng gỗ hiện có
-  stone: number; // Số lượng đá hiện có
-  food: number; // Số lượng thức ăn
-};
-
-// Vật thể trên bản đồ đảo
-export type WorldObject = {
+// Thông tin từ vựng hiển thị trên Victory Screen
+export interface QuestWordInfo {
   id: string;
-  type: "tree" | "rock" | "camp" | "npc" | "gate" | "chest";
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  solid: boolean; // Có cản đường nhân vật hay không
-  label: string;
-  opened?: boolean; // Đã mở (đối với rương, cổng)
-};
+  word: string;
+  pronunciation: string;
+  partOfSpeech: string;
+  meanings: string[];
+  exampleSentence?: string;
+  exampleTranslation?: string;
+  difficulty?: string;
+}
 
-// Dữ liệu câu đố từ vựng mở phong ấn
-export type VocabQuestion = {
-  id: string;
-  prompt: string; // Câu hỏi gợi ý
-  options: string[]; // 4 lựa chọn trắc nghiệm
-  correct: number; // Index của đáp án đúng (0 - 3)
-  reward: {
-    wood?: number;
-    stone?: number;
-    food?: number;
+// Cấu trúc nhiệm vụ động hoàn chỉnh cho một ván chơi
+export interface DynamicQuest {
+  theme: IslandTheme;
+  words: QuestWordInfo[]; // 7 từ vựng của ván chơi
+  puzzles: {
+    act1_intro: VocabQuestion[]; // 1 câu hỏi hồi 1
+    act2_craft: VocabQuestion[]; // 2 câu hỏi hồi 2
+    act3_chest: VocabQuestion[]; // 2 câu hỏi hồi 3
+    act4_gate: VocabQuestion[];  // 2 câu hỏi hồi 4
   };
-};
+}
+
+// Câu hỏi trắc nghiệm ngữ cảnh trong game
+export interface VocabQuestion {
+  id: string;
+  title: string;
+  contextEn: string;
+  contextVi: string;
+  question: string;       // Câu chứa ____
+  hintVi: string;
+  wordId?: string;
+  word?: string;
+  options: VocabQuestionOption[];
+}
+
+export interface VocabQuestionOption {
+  id: string;             // 'a' | 'b' | 'c' | 'd'
+  text: string;
+  isCorrect: boolean;
+  explanationEn: string;
+  explanationVi: string;
+}
 ```
+
+---
+
+## Các phím điều khiển (Controls)
+
+| Phím | Chức năng |
+| :--- | :--- |
+| `W` / `↑` | Di chuyển lên trên (North) |
+| `S` / `↓` | Di chuyển xuống dưới (South) |
+| `A` / `←` | Di chuyển sang trái (West) |
+| `D` / `→` | Di chuyển sang phải (East) |
+| `E` / `Space` | **Tương tác**: Chặt cây, đập đá, nói chuyện NPC, mở rương, mở cổng |
+| `P` / `Esc` | Tạm dừng trò chơi (Pause) / Tiếp tục (Resume) |
