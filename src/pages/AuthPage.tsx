@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/components/AuthProvider";
 import { authService } from "@/services/authService";
@@ -85,6 +85,7 @@ export default function AuthPage() {
   const [isOAuthSubmitting, setIsOAuthSubmitting] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState(0);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -162,6 +163,13 @@ export default function AuthPage() {
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    const trimmedEmail = email.trim();
+    const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      toast.error("Vui lòng nhập địa chỉ email hợp lệ (ví dụ: name@example.com).");
+      return;
+    }
+
     if (mode === "sign-in") {
       const { blockedUntil } = readSignInAttempts();
       if (blockedUntil > Date.now()) {
@@ -178,9 +186,12 @@ export default function AuthPage() {
 
     setIsSubmitting(true);
     try {
+      const destination = getPostAuthDestination();
+      document.cookie = `lingohub_auth_next=${encodeURIComponent(destination)}; path=/; max-age=300; SameSite=Lax`;
+
       const result = mode === "sign-in"
-        ? await authService.signInWithPassword(email, password)
-        : await authService.signUp(email, password, `${window.location.origin}/auth`);
+        ? await authService.signInWithPassword(trimmedEmail, password)
+        : await authService.signUp(trimmedEmail, password, `${window.location.origin}/auth/callback`);
 
       if (result.error) {
         if (mode === "sign-in" && (result.error.status === 400 || result.error.status === 401)) {
@@ -195,16 +206,16 @@ export default function AuthPage() {
         }
         toast.error(result.error.message);
       } else if (mode === "sign-up" && !result.data.session) {
-        toast.success("Hãy xác nhận địa chỉ email qua liên kết chúng tôi vừa gửi.");
+        setPendingVerificationEmail(trimmedEmail);
+        toast.success("Vui lòng kiểm tra email để kích hoạt tài khoản!");
       } else {
         saveSignInAttempts({ windowStartedAt: 0, count: 0, blockedUntil: 0 });
-        toast.success("Đăng nhập thành công!");
-        const destination = getPostAuthDestination();
+        toast.success(mode === "sign-up" ? "Tạo tài khoản thành công!" : "Đăng nhập thành công!");
         router.refresh();
         window.location.href = destination;
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Không thể đăng nhập lúc này.");
+      toast.error(error instanceof Error ? error.message : "Không thể thực hiện lúc này.");
     } finally {
       setIsSubmitting(false);
     }
@@ -217,6 +228,39 @@ export default function AuthPage() {
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
           <p className="text-sm font-mono text-zinc-400">Đang chuyển hướng đến bảng điều khiển...</p>
         </div>
+      </main>
+    );
+  }
+
+  if (pendingVerificationEmail) {
+    return (
+      <main className="relative flex min-h-dvh items-center justify-center overflow-x-hidden overflow-y-auto bg-zinc-950 px-4 py-8 text-zinc-100 sm:px-5 sm:py-12">
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[24px_24px]" />
+        <section className="relative flex w-full flex-col justify-center border border-zinc-800 bg-zinc-950 p-6 shadow-2xl sm:max-w-md sm:p-9 text-center">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_25px_rgba(16,185,129,0.15)]">
+            <Mail className="w-8 h-8 animate-pulse" />
+          </div>
+          <h2 className="text-2xl font-black text-white tracking-tight">Xác thực địa chỉ email</h2>
+          <p className="mt-3 text-sm text-zinc-300 leading-relaxed font-normal">
+            Chúng tôi đã gửi một liên kết kích hoạt tài khoản tới:
+          </p>
+          <div className="mt-2.5 p-3 rounded-lg bg-zinc-900 border border-zinc-800 font-mono text-xs font-bold text-emerald-400 break-all select-all">
+            {pendingVerificationEmail}
+          </div>
+          <p className="mt-4 text-xs text-zinc-400 leading-relaxed font-normal">
+            Vui lòng mở hộp thư (bao gồm cả mục Spam/Thư rác) và bấm vào liên kết để kích hoạt tài khoản. Nếu email này không tồn tại, bạn sẽ không thể nhận liên kết và tài khoản sẽ không thể đăng nhập.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setPendingVerificationEmail(null);
+              setMode("sign-in");
+            }}
+            className="mt-6 w-full bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-black uppercase tracking-widest text-xs px-4 py-3 rounded transition-colors active:scale-95"
+          >
+            Quay lại Đăng nhập
+          </button>
+        </section>
       </main>
     );
   }
