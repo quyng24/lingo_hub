@@ -6,7 +6,7 @@ import { useGameEngine } from "@/hooks/useGameEngine";
 
 export default function Header() {
   const { gameState } = useGameEngine();
-  const { score, combo, lives, level } = gameState;
+  const { status, score, combo, lives, level } = gameState;
 
   return (
     <header className="absolute top-0 inset-x-0 px-4 sm:px-6 py-4 flex items-center justify-between bg-linear-to-b from-slate-950/90 to-transparent z-10 pointer-events-none">
