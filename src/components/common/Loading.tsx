@@ -4,17 +4,19 @@ interface LoadingProps {
   message?: string;
 }
 
-export default function Loading({ message = "Đang tải bài học..." }: LoadingProps) {
+export default function Loading({ message = "Đang tải dữ liệu..." }: LoadingProps) {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-slate-50/90 backdrop-blur-xs z-50">
-      <div className="flex flex-col items-center p-6 bg-white rounded-2xl shadow-sm border border-slate-200/80 max-w-xs w-full text-center">
-        {/* Soft Modern Spinner */}
-        <div className="relative w-12 h-12">
-          <div className="w-12 h-12 rounded-full border-3 border-indigo-100 border-t-indigo-600 animate-spin"></div>
+    <div className="fixed inset-0 flex items-center justify-center bg-zinc-950/80 backdrop-blur-xs z-50">
+      <div className="flex flex-col items-center p-6 bg-zinc-900 border border-zinc-800 shadow-2xl max-w-xs w-full text-center">
+        {/* Sleek Neon Emerald Spinner */}
+        <div className="relative w-10 h-10">
+          <div className="w-10 h-10 rounded-full border-2 border-zinc-800 border-t-emerald-400 animate-spin" />
         </div>
 
         {/* Message */}
-        <p className="mt-4 text-sm font-medium text-slate-700">{message}</p>
+        <p className="mt-4 text-xs font-mono uppercase tracking-wider text-zinc-300">
+          {message}
+        </p>
       </div>
     </div>
   );

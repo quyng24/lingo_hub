@@ -23,6 +23,7 @@ import {
   type SupportTicket,
   type TicketCategory,
 } from "@/services/supportService";
+import { Skeleton } from "@/components/common/Skeleton";
 
 export default function SupportPage() {
   const router = useRouter();
@@ -275,8 +276,23 @@ export default function SupportPage() {
         {activeTab === "history" && (
           <div className="space-y-4 pt-2">
             {isLoadingTickets ? (
-              <div className="p-8 text-center text-xs font-mono text-zinc-500">
-                Đang tải dữ liệu yêu cầu...
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="border border-zinc-800 bg-zinc-900/30 p-4 sm:p-5 space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="w-20 h-5" />
+                        <Skeleton className="w-16 h-5" />
+                      </div>
+                      <Skeleton className="w-28 h-4" />
+                    </div>
+                    <Skeleton className="w-48 h-5" />
+                    <Skeleton className="w-full h-12" />
+                  </div>
+                ))}
               </div>
             ) : tickets.length === 0 ? (
               <div className="p-10 border border-zinc-800 bg-zinc-900/20 text-center space-y-3">

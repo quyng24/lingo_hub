@@ -26,6 +26,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setReviewSchedule = useLearningStore((state) => state.setReviewSchedule);
 
   useEffect(() => {
+
+    useLearningStore.getState().hydrateCachedStreak();
+
     if (!authService.isConfigured) {
       queueMicrotask(() => setIsAuthReady(true));
       return;

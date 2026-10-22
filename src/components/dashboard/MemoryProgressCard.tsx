@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import ProgressRing from "@/components/ProgressRing";
+import { Skeleton } from "../common/Skeleton";
 
 interface MemoryProgressCardProps {
   totalWords: number;
@@ -12,6 +13,7 @@ interface MemoryProgressCardProps {
   masteredPercent: number;
   newPercent: number;
   rememberingPercent: number;
+  isLoading?: boolean;
 }
 
 export default function MemoryProgressCard({
@@ -22,6 +24,7 @@ export default function MemoryProgressCard({
   masteredPercent,
   newPercent,
   rememberingPercent,
+  isLoading = false,
 }: MemoryProgressCardProps) {
   return (
     <section
@@ -34,9 +37,13 @@ export default function MemoryProgressCard({
           <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-zinc-400">
             Tiến độ ghi nhớ
           </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            {totalWords} từ trong tiến trình
-          </p>
+          <div className="text-xs text-zinc-400 mt-0.5">
+            {isLoading ? (
+              <Skeleton className="h-3 w-28 mt-0.5" />
+            ) : (
+              `${totalWords} từ trong tiến trình`
+            )}
+          </div>
         </div>
         <Link
           href="/daily-learn/progress"
@@ -48,35 +55,51 @@ export default function MemoryProgressCard({
 
       {/* Progress Ring & High-level stats */}
       <div className="flex items-center gap-5 pt-1">
-        <ProgressRing
-          value={masteredPercent}
-          size={96}
-          strokeWidth={8}
-          colorClass="text-cyan-400"
-          trackColorClass="text-zinc-800"
-          label={`Mức độ thành thạo: ${masteredPercent}%`}
-        >
-          <div className="text-center">
-            <span className="block text-lg font-black font-mono tracking-tight text-white">
-              {masteredPercent}%
-            </span>
-            <span className="block text-[9px] uppercase font-mono tracking-wider text-zinc-400">
-              Mastered
-            </span>
+        {isLoading ? (
+          <div className="w-24 h-24 rounded-full border-4 border-zinc-800 animate-pulse flex items-center justify-center">
+            <Skeleton className="w-10 h-4 rounded-xs" />
           </div>
-        </ProgressRing>
+        ) : (
+          <ProgressRing
+            value={masteredPercent}
+            size={96}
+            strokeWidth={8}
+            colorClass="text-cyan-400"
+            trackColorClass="text-zinc-800"
+            label={`Mức độ thành thạo: ${masteredPercent}%`}
+          >
+            <div className="text-center">
+              <span className="block text-lg font-black font-mono tracking-tight text-white">
+                {masteredPercent}%
+              </span>
+              <span className="block text-[9px] uppercase font-mono tracking-wider text-zinc-400">
+                Mastered
+              </span>
+            </div>
+          </ProgressRing>
+        )}
 
         <div className="flex-1 min-w-0 space-y-1">
           <p className="text-xs text-zinc-400">Tỷ lệ thành thạo</p>
-          <p className="text-xl sm:text-2xl font-light font-mono text-white">
-            {masteredWords} / {totalWords}{" "}
-            <span className="text-xs text-zinc-400 font-normal">từ</span>
-          </p>
-          <p className="text-[11px] text-zinc-400 leading-normal truncate">
-            {totalWords > 0
-              ? `${learningWordsTotal(newWords, rememberingWords)} từ đang trong chu kỳ ôn tập`
-              : "Chưa có từ nào trong hệ thống"}
-          </p>
+          <div className="text-xl sm:text-2xl font-light font-mono text-white">
+            {isLoading ? (
+              <Skeleton className="h-7 w-24 my-0.5" />
+            ) : (
+              <>
+                {masteredWords} / {totalWords}{" "}
+                <span className="text-xs text-zinc-400 font-normal">từ</span>
+              </>
+            )}
+          </div>
+          <div className="text-[11px] text-zinc-400 leading-normal truncate">
+            {isLoading ? (
+              <Skeleton className="h-3 w-36 mt-1" />
+            ) : totalWords > 0 ? (
+              `${learningWordsTotal(newWords, rememberingWords)} từ đang trong chu kỳ ôn tập`
+            ) : (
+              "Chưa có từ nào trong hệ thống"
+            )}
+          </div>
         </div>
       </div>
 
@@ -87,21 +110,27 @@ export default function MemoryProgressCard({
           role="img"
           aria-label={`${newWords} từ mới, ${rememberingWords} đang nhớ, ${masteredWords} thành thạo`}
         >
-          <div
-            className="h-full bg-emerald-400 transition-[width] duration-500"
-            style={{ width: `${newPercent}%` }}
-            title={`Mới học: ${newWords} từ (${newPercent}%)`}
-          />
-          <div
-            className="h-full bg-amber-300 transition-[width] duration-500"
-            style={{ width: `${rememberingPercent}%` }}
-            title={`Đang nhớ: ${rememberingWords} từ (${rememberingPercent}%)`}
-          />
-          <div
-            className="h-full bg-cyan-300 transition-[width] duration-500"
-            style={{ width: `${masteredPercent}%` }}
-            title={`Thành thạo: ${masteredWords} từ (${masteredPercent}%)`}
-          />
+          {isLoading ? (
+            <div className="h-full w-full bg-zinc-800/80 animate-pulse" />
+          ) : (
+            <>
+              <div
+                className="h-full bg-emerald-400 transition-[width] duration-500"
+                style={{ width: `${newPercent}%` }}
+                title={`Mới học: ${newWords} từ (${newPercent}%)`}
+              />
+              <div
+                className="h-full bg-amber-300 transition-[width] duration-500"
+                style={{ width: `${rememberingPercent}%` }}
+                title={`Đang nhớ: ${rememberingWords} từ (${rememberingPercent}%)`}
+              />
+              <div
+                className="h-full bg-cyan-300 transition-[width] duration-500"
+                style={{ width: `${masteredPercent}%` }}
+                title={`Thành thạo: ${masteredWords} từ (${masteredPercent}%)`}
+              />
+            </>
+          )}
         </div>
       </div>
 
@@ -115,9 +144,13 @@ export default function MemoryProgressCard({
               <span className="text-zinc-400 text-[10px] ml-1.5">(1–3 ngày)</span>
             </div>
           </div>
-          <span className="font-mono font-medium text-white tabular-nums">
-            {newWords} <span className="text-zinc-400 text-[10px]">({newPercent}%)</span>
-          </span>
+          {isLoading ? (
+            <Skeleton className="h-4 w-12" />
+          ) : (
+            <span className="font-mono font-medium text-white tabular-nums">
+              {newWords} <span className="text-zinc-400 text-[10px]">({newPercent}%)</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center justify-between py-2.5">
@@ -128,9 +161,13 @@ export default function MemoryProgressCard({
               <span className="text-zinc-400 text-[10px] ml-1.5">(7–14 ngày)</span>
             </div>
           </div>
-          <span className="font-mono font-medium text-white tabular-nums">
-            {rememberingWords} <span className="text-zinc-400 text-[10px]">({rememberingPercent}%)</span>
-          </span>
+          {isLoading ? (
+            <Skeleton className="h-4 w-12" />
+          ) : (
+            <span className="font-mono font-medium text-white tabular-nums">
+              {rememberingWords} <span className="text-zinc-400 text-[10px]">({rememberingPercent}%)</span>
+            </span>
+          )}
         </div>
 
         <div className="flex items-center justify-between py-2.5">
@@ -141,17 +178,21 @@ export default function MemoryProgressCard({
               <span className="text-zinc-400 text-[10px] ml-1.5">(30 ngày)</span>
             </div>
           </div>
-          <span className="font-mono font-medium text-cyan-300 tabular-nums">
-            {masteredWords} <span className="text-zinc-400 text-[10px]">({masteredPercent}%)</span>
-          </span>
+          {isLoading ? (
+            <Skeleton className="h-4 w-12" />
+          ) : (
+            <span className="font-mono font-medium text-cyan-300 tabular-nums">
+              {masteredWords} <span className="text-zinc-400 text-[10px]">({masteredPercent}%)</span>
+            </span>
+          )}
         </div>
       </div>
 
-      {totalWords === 0 && (
+      {isLoading && totalWords === 0 ? (
         <p className="text-xs text-zinc-400 pt-1 border-t border-zinc-800">
           Hoàn thành bài học đầu tiên để kích hoạt biểu đồ tiến độ.
         </p>
-      )}
+      ) : null}
     </section>
   );
 }
@@ -159,4 +200,3 @@ export default function MemoryProgressCard({
 function learningWordsTotal(newCount: number, rememberingCount: number) {
   return newCount + rememberingCount;
 }
-

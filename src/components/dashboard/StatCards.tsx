@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { BookOpen, Flame, RotateCcw, Trophy } from "lucide-react";
 import { formatRelativeStudyDate } from "@/utils/date";
+import { Skeleton } from "../common/Skeleton";
 
 interface StatCardsProps {
   streakCount: number;
@@ -41,21 +42,29 @@ export default function StatCards({
         </div>
         <div className="mt-3">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-white">
-              {isLoading ? "—" : streakCount}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-white">
+                {streakCount}
+              </span>
+            )}
             <span className="text-xs text-zinc-400 font-mono">ngày</span>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400 truncate">
-            Gần nhất: {formatRelativeStudyDate(lastStudyDate)}
-          </p>
+          <div className="mt-1 text-[11px] text-zinc-400 truncate">
+            {isLoading ? (
+              <Skeleton className="h-3 w-28 mt-1" />
+            ) : (
+              `Gần nhất: ${formatRelativeStudyDate(lastStudyDate)}`
+            )}
+          </div>
         </div>
       </div>
 
       {/* 2. CẦN ÔN HÔM NAY */}
       <div
         className={`border p-3.5 sm:p-5 flex flex-col justify-between transition-colors ${
-          dueWords > 0
+          !isLoading && dueWords > 0
             ? "border-amber-500/40 bg-amber-500/5"
             : "border-zinc-800 bg-zinc-900/40"
         }`}
@@ -66,7 +75,7 @@ export default function StatCards({
           </span>
           <div
             className={`w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center border ${
-              dueWords > 0
+              !isLoading && dueWords > 0
                 ? "bg-amber-500/10 border-amber-500/30 text-amber-400"
                 : "bg-zinc-800 border-zinc-700 text-zinc-400"
             }`}
@@ -76,17 +85,23 @@ export default function StatCards({
         </div>
         <div className="mt-3">
           <div className="flex items-baseline gap-1.5">
-            <span
-              className={`text-2xl sm:text-3xl font-light font-mono tabular-nums ${
-                dueWords > 0 ? "text-amber-300 font-bold" : "text-zinc-200"
-              }`}
-            >
-              {isLoading ? "—" : dueWords}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span
+                className={`text-2xl sm:text-3xl font-light font-mono tabular-nums ${
+                  dueWords > 0 ? "text-amber-300 font-bold" : "text-zinc-200"
+                }`}
+              >
+                {dueWords}
+              </span>
+            )}
             <span className="text-xs text-zinc-400 font-mono">từ</span>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400 truncate">
-            {dueWords > 0 ? (
+          <div className="mt-1 text-[11px] text-zinc-400 truncate">
+            {isLoading ? (
+              <Skeleton className="h-3 w-20 mt-1" />
+            ) : dueWords > 0 ? (
               <Link
                 href="/daily-learn/learn"
                 className="text-amber-400 hover:underline font-medium"
@@ -96,7 +111,7 @@ export default function StatCards({
             ) : (
               <span className="text-emerald-400">Đã xong hôm nay</span>
             )}
-          </p>
+          </div>
         </div>
       </div>
 
@@ -112,14 +127,22 @@ export default function StatCards({
         </div>
         <div className="mt-3">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-emerald-400">
-              {isLoading ? "—" : learningWords}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-emerald-400">
+                {learningWords}
+              </span>
+            )}
             <span className="text-xs text-zinc-400 font-mono">từ</span>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400 truncate">
-            {newWords} mới · {rememberingWords} đang nhớ
-          </p>
+          <div className="mt-1 text-[11px] text-zinc-400 truncate">
+            {isLoading ? (
+              <Skeleton className="h-3 w-32 mt-1" />
+            ) : (
+              `${newWords} mới · ${rememberingWords} đang nhớ`
+            )}
+          </div>
         </div>
       </div>
 
@@ -135,14 +158,22 @@ export default function StatCards({
         </div>
         <div className="mt-3">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-cyan-300">
-              {isLoading ? "—" : masteredWords}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 my-0.5" />
+            ) : (
+              <span className="text-2xl sm:text-3xl font-light font-mono tabular-nums text-cyan-300">
+                {masteredWords}
+              </span>
+            )}
             <span className="text-xs text-zinc-400 font-mono">từ</span>
           </div>
-          <p className="mt-1 text-[11px] text-zinc-400 truncate">
-            {masteredPercent}% tổng từ vựng
-          </p>
+          <div className="mt-1 text-[11px] text-zinc-400 truncate">
+            {isLoading ? (
+              <Skeleton className="h-3 w-28 mt-1" />
+            ) : (
+              `${masteredPercent}% tổng từ vựng`
+            )}
+          </div>
         </div>
       </div>
     </section>

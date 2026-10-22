@@ -5,10 +5,12 @@ import { Flame, Zap } from "lucide-react";
 import AccountControl from "@/components/AccountControl";
 
 interface DashboardHeaderProps {
-  streakCount: number;
+  streakCount?: number | null;
+  isLoading?: boolean;
 }
 
-export default function DashboardHeader({ streakCount }: DashboardHeaderProps) {
+export default function DashboardHeader({ streakCount, isLoading }: DashboardHeaderProps) {
+  const isDetermined = streakCount !== undefined && streakCount !== null;
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/85 px-4 sm:px-6 lg:px-8 py-3.5 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
@@ -50,12 +52,33 @@ export default function DashboardHeader({ streakCount }: DashboardHeaderProps) {
 
         {/* Right side: Streak & Account */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {streakCount > 0 && (
-            <div className="inline-flex items-center gap-1 px-2 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-mono font-bold">
-              <Flame className="w-3.5 h-3.5 fill-current" />
-              <span>{streakCount}d</span>
+          {isLoading && !isDetermined ? (
+            <div
+              aria-label="Đang tải chuỗi ngày học..."
+              className="w-14 h-7 bg-zinc-900 border border-zinc-800 animate-pulse flex items-center justify-center shrink-0"
+            >
+              <div className="w-7 h-2.5 bg-zinc-800/80 rounded-xs" />
+            </div>
+          ) : isDetermined && streakCount > 0 ? (
+            <div
+              suppressHydrationWarning
+              title={`Chuỗi học liên tục: ${streakCount} ngày`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-mono font-bold shrink-0 transition-colors"
+            >
+              <Flame className="w-3.5 h-3.5 fill-current text-orange-400" />
+              <span suppressHydrationWarning>{streakCount}d</span>
+            </div>
+          ) : (
+            <div
+              suppressHydrationWarning
+              title="Chưa có chuỗi học. Hãy hoàn thành bài học hôm nay!"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-900 border border-zinc-800 text-zinc-500 text-xs font-mono font-semibold shrink-0 transition-colors"
+            >
+              <Flame className="w-3.5 h-3.5 text-zinc-600" />
+              <span suppressHydrationWarning>0d</span>
             </div>
           )}
+
           <AccountControl />
         </div>
       </div>

@@ -4,9 +4,12 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Flame } from "lucide-react";
 import AccountControl from "@/components/AccountControl";
+
 import Loading from "@/components/common/Loading";
 import { useAuth } from "@/components/AuthProvider";
 import { learningProgressService, type UserLearningStats } from "@/services/learningProgressService";
+import { useLearningStore } from "@/stores/learningStore";
+import { ProgressSkeleton } from "@/components/common/Skeleton";
 
 function formatStudyDate(date: string | null) {
   if (!date) return "Chưa có dữ liệu";
@@ -26,7 +29,10 @@ export default function DailyLearnProgressPage() {
 
     learningProgressService.getUserStats(user.id)
       .then((userStats) => {
-        if (isActive) setStats(userStats);
+        if (isActive) {
+          setStats(userStats);
+          useLearningStore.getState().setCachedStreak(userStats.streakCount);
+        }
       })
       .catch(() => {
         if (isActive) setError("Chưa tải được tiến độ học. Hãy thử tải lại trang.");
@@ -37,7 +43,7 @@ export default function DailyLearnProgressPage() {
     };
   }, [isProgressReady, user]);
 
-  if (!isProgressReady || !stats && !error) return <Loading message="Đang tải tiến độ học..." />;
+ if (!isProgressReady || (!stats && !error)) return <ProgressSkeleton />;
 
   const totalWords = stats?.totalWords ?? 0;
   const newPercent = totalWords ? ((stats?.newWords ?? 0) / totalWords) * 100 : 0;

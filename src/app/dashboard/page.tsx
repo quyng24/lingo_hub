@@ -12,6 +12,7 @@ import StatCards from "@/components/dashboard/StatCards";
 import ActionCards from "@/components/dashboard/ActionCards";
 import MemoryProgressCard from "@/components/dashboard/MemoryProgressCard";
 import { useRouter } from "next/navigation";
+import { useLearningStore } from "@/stores/learningStore";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -19,6 +20,9 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<UserLearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  const cachedStreak = useLearningStore((s) => s.cachedStreak);
+  const setCachedStreak = useLearningStore((s) => s.setCachedStreak);
 
   const fetchStats = () => {
     if (!user || !isProgressReady) return;
@@ -29,6 +33,7 @@ export default function DashboardPage() {
       .getUserStats(user.id)
       .then((userStats) => {
         setStats(userStats);
+        setCachedStreak(userStats.streakCount);
       })
       .catch(() => {
         setError("Chưa tải được thống kê học tập. Hãy thử tải lại.");
@@ -53,6 +58,7 @@ export default function DashboardPage() {
       .then((userStats) => {
         if (isActive) {
           setStats(userStats);
+          setCachedStreak(userStats.streakCount);
           setIsLoading(false);
         }
       })
@@ -66,7 +72,7 @@ export default function DashboardPage() {
     return () => {
       isActive = false;
     };
-  }, [isProgressReady, user]);
+  }, [isProgressReady, user, setCachedStreak]);
 
   const totalWords = stats?.totalWords ?? 0;
   const newWords = stats?.newWords ?? 0;
@@ -74,7 +80,7 @@ export default function DashboardPage() {
   const learningWords = stats?.learningWords ?? 0;
   const masteredWords = stats?.masteredWords ?? 0;
   const dueWords = stats?.dueWords ?? 0;
-  const streakCount = stats?.streakCount ?? 0;
+  const streakCount = stats?.streakCount ?? cachedStreak ?? 0;
   const lastStudyDate = stats?.lastStudyDate ?? null;
 
   const masteredPercent = totalWords ? Math.round((masteredWords / totalWords) * 100) : 0;
@@ -84,7 +90,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-emerald-500/30 font-sans">
       {/* NAVIGATION HEADER */}
-      <DashboardHeader streakCount={streakCount} />
+      <DashboardHeader streakCount={streakCount} isLoading={isLoading} />
 
       {/* 📱 RESPONSIVE CONTAINER */}
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8">
@@ -109,7 +115,7 @@ export default function DashboardPage() {
 
         {/* 4 KEY METRIC CARDS */}
         <StatCards
-          streakCount={streakCount}
+          streakCount={streakCount ?? 0}
           lastStudyDate={lastStudyDate}
           dueWords={dueWords}
           learningWords={learningWords}
@@ -137,6 +143,7 @@ export default function DashboardPage() {
               masteredPercent={masteredPercent}
               newPercent={newPercent}
               rememberingPercent={rememberingPercent}
+              isLoading={isLoading}
             />
           </div>
         </div>
