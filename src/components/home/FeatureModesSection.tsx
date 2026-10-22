@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, BookOpen, BrainCircuit, Flame, Gamepad2, Keyboard, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, BookOpen, BrainCircuit, Flame, Gamepad2, ShieldCheck, Zap } from "lucide-react";
 
 export default function FeatureModesSection() {
   return (
@@ -74,7 +74,7 @@ export default function FeatureModesSection() {
             </div>
           </div>
 
-          {/* 2. WORD BLASTER PILLAR */}
+          {/* 2. GAME HUB PILLAR */}
           <div className="border border-cyan-500/30 bg-linear-to-b from-cyan-500/5 to-zinc-950 p-6 sm:p-8 flex flex-col justify-between hover:border-cyan-500/60 transition-colors">
             <div>
               <div className="flex items-center justify-between pb-6 border-b border-zinc-800/80">
@@ -82,46 +82,45 @@ export default function FeatureModesSection() {
                   <Gamepad2 className="w-6 h-6" />
                 </div>
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-cyan-400 bg-cyan-500/10 px-3 py-1 border border-cyan-500/20">
-                  Arcade Gaming
+                  Game Library
                 </span>
               </div>
 
               <h3 className="mt-6 text-2xl font-bold text-white">
-                Đấu Trường Word Blaster
+                Khu Trò Chơi (Game Library)
               </h3>
               <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
-                Tiêu diệt các từ vựng đang rơi bằng tốc độ gõ phím. Áp lực thời gian buộc não bộ
-                phải liên kết trực tiếp âm thanh, mặt chữ và ngữ nghĩa mà không kịp dịch nhẩm sang tiếng Việt.
+                Biến việc học từ vựng thành những thử thách hồi hộp. Chọn tựa game yêu thích để kích hoạt phản xạ tự nhiên: từ bắn chữ tốc độ đến phiêu lưu sinh tồn đảo hoang.
               </p>
 
               {/* Highlights */}
               <div className="mt-6 space-y-2.5 text-xs text-zinc-300 font-mono">
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400 font-bold">✓</span>
-                  <span>7 Chủ đề đa dạng: Technology, Business, Daily Life...</span>
+                  <span>Word Blaster: Bắn nổ từ rơi bằng tốc độ gõ phím & combo</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400 font-bold">✓</span>
-                  <span>Cơ chế tính điểm Combo x2, x3 & 3 mạng sống hồi hộp</span>
+                  <span>Word Island: RPG 2D pixel sinh tồn, chặt cây đập đá giải đố</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400 font-bold">✓</span>
-                  <span>Đồ họa Arcade hoài niệm, âm thanh phản hồi sinh động</span>
+                  <span>Âm thanh sống động, đồ họa hoài niệm và tính điểm thời gian thực</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400 font-bold">✓</span>
-                  <span>Rèn luyện tốc độ gõ 10 ngón song song với phản xạ từ</span>
+                  <span>Đồng bộ tiến độ và điểm số trực tiếp vào tài khoản học viên</span>
                 </div>
               </div>
             </div>
 
             <div className="mt-8 pt-6 border-t border-zinc-800/80">
               <Link
-                href="/game/word-blaster"
+                href="/game"
                 className="inline-flex items-center gap-2 px-6 py-3.5 bg-cyan-500 hover:bg-cyan-400 text-zinc-950 font-bold text-xs uppercase tracking-wider transition-colors"
               >
-                <Keyboard className="w-4 h-4" />
-                Vào chơi Word Blaster
+                <Gamepad2 className="w-4 h-4" />
+                Khám phá Game Library
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

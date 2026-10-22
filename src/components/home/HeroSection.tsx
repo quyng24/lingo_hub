@@ -28,7 +28,7 @@ export default function HeroSection() {
           Tạm biệt cách học vẹt nhồi nhét từ rời rạc. LingoHub áp dụng phương pháp{" "}
           <strong className="text-zinc-200 font-semibold">Micro-learning 4 bước</strong>{" "}
           (Từ vựng ➔ Cụm từ ➔ Câu ngữ cảnh ➔ Bài tập), kết hợp thuật toán lặp lại ngắt quãng (SRS)
-          và đấu trường gõ phím Word Blaster để biến tiếng Anh thành phản xạ tự nhiên.
+          và kho game tương tác (Word Blaster, Word Island...) để biến tiếng Anh thành phản xạ tự nhiên.
         </p>
 
         {/* Action Buttons */}
@@ -42,11 +42,11 @@ export default function HeroSection() {
             <ArrowRight className="w-4 h-4" />
           </Link>
           <Link
-            href="/game/word-blaster"
+            href="/game"
             className="px-8 py-4 sm:py-5 bg-zinc-900/80 hover:bg-zinc-800 border-2 border-zinc-700 hover:border-zinc-500 text-white font-bold uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-3 transition-all"
           >
             <Gamepad2 className="w-4 h-4 text-cyan-400" />
-            Chơi Word Blaster
+            Khu trò chơi
           </Link>
           <Link
             href="/dashboard"

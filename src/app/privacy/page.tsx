@@ -358,14 +358,15 @@ export default function PrivacyPolicyPage() {
           </p>
           <div className="p-4 bg-zinc-900/40 border border-zinc-800 text-xs font-mono text-zinc-300 space-y-1">
             <p>
-              • <strong>Dự án:</strong> LingoHub English Vocabulary Platform
+              • <strong>Dự án:</strong> LingoHub · Daily Learn & Game Hub
+              Platform
             </p>
             <p>
               • <strong>Email phụ trách bảo mật:</strong>{" "}
               <span className="text-emerald-400">quy24.dev@gmail.com</span>
             </p>
             <p>
-              • <strong>Thời gian phản hồi cam kết:</strong> Trong vòng 24 - 48
+              • <strong>Thời gian phản hồi cam kết:</strong> Trong vòng 48 - 72
               giờ làm việc.
             </p>
           </div>
@@ -386,6 +387,14 @@ export default function PrivacyPolicyPage() {
             Vào học ngay
           </Link>
         </div>
+
+        {/* 📜 Footer Copyright (Đồng nhất với Homepage) */}
+        <footer className="border-t border-zinc-900 pt-8 pb-4 text-center text-xs font-mono text-zinc-500">
+          <p>
+            © {new Date().getFullYear()} LingoHub · Daily Learn & Game Hub
+            Platform. All rights reserved.
+          </p>
+        </footer>
       </main>
     </div>
   );

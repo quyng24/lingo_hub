@@ -30,11 +30,11 @@ export default function CtaFooterSection() {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              href="/game/word-blaster"
+              href="/game"
               className="px-8 py-4 sm:py-5 bg-emerald-600 border-2 border-zinc-950 text-zinc-950 font-black uppercase tracking-widest text-xs sm:text-sm flex items-center justify-center gap-3 hover:bg-emerald-400 transition-all"
             >
               <Gamepad2 className="w-4 h-4 text-zinc-950" />
-              Chơi Word Blaster
+              Khu trò chơi
             </Link>
           </div>
         </div>
@@ -43,7 +43,7 @@ export default function CtaFooterSection() {
       {/* 📜 FOOTER */}
       <footer className="bg-zinc-950 border-t border-zinc-900 py-10 px-5 sm:px-6 text-zinc-500 text-xs font-mono">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p>© {new Date().getFullYear()} LingoHub · Daily Learn & Game Hub Platform.</p>
+          <p>© {new Date().getFullYear()} LingoHub · Daily Learn & Game Hub Platform. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-4 text-zinc-400">
             <Link href="/privacy" className="hover:text-emerald-400 transition-colors underline underline-offset-4">
               Chính sách quyền riêng tư
