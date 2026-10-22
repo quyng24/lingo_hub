@@ -11,8 +11,10 @@ import HeroBanner from "@/components/dashboard/HeroBanner";
 import StatCards from "@/components/dashboard/StatCards";
 import ActionCards from "@/components/dashboard/ActionCards";
 import MemoryProgressCard from "@/components/dashboard/MemoryProgressCard";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user, isProgressReady } = useAuth();
   const [stats, setStats] = useState<UserLearningStats | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,12 @@ export default function DashboardPage() {
         setIsLoading(false);
       });
   };
+
+  useEffect(() => {
+    if (isProgressReady && !user) {
+      router.replace("/auth?next=/dashboard");
+    }
+  }, [isProgressReady, user, router]);
 
   useEffect(() => {
     if (!user || !isProgressReady) return;

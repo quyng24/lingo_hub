@@ -41,6 +41,33 @@ export class AuthService {
   signOut() {
     return apiClient.requireClient().auth.signOut();
   }
+
+  async deleteAccount() {
+    try {
+      const response = await fetch("/api/auth/delete-account", {
+        method: "POST",
+        headers: { "Content-Type": "application/json"},
+      });
+
+      if (response.ok) {
+        return;
+      }
+
+      const errorPayload = await response.json().catch(() => null);
+      if (errorPayload?.error) throw new Error(errorPayload.error);
+    } catch (error) {
+      // 2. Fallback to direct client RPC execution if server endpoint is unreachable
+      console.warn("API delete-account route failed, attempting direct RPC fallback:", error);
+      const client = apiClient.requireClient();
+      const { error: rpcError } = await client.rpc("delete_user_account");
+
+      if (rpcError) {
+        throw new Error(rpcError.message || "Không thể xóa tài khoản vào lúc này.");
+      }
+
+      await client.auth.signOut();
+    }
+  }
 }
 
 export const authService = new AuthService();

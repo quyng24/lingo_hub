@@ -1,16 +1,20 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-function safeDestination(request: NextRequest, destination: string | null, fallback: string) {
-  if (!destination?.startsWith("/") || destination.startsWith("//")) return fallback;
-  const target = new URL(destination, request.url);
-  return target.origin === request.nextUrl.origin ? target.pathname + target.search : fallback;
+function hasSupabaseAuthCookie(request: NextRequest): boolean {
+  return request.cookies.getAll().some((cookie) =>
+    cookie.name.startsWith("sb-") ||
+    cookie.name.includes("auth-token") ||
+    cookie.name.includes("access-token")
+  );
 }
 
-function redirectWithCookies(source: NextResponse, destination: URL) {
-  const response = NextResponse.redirect(destination);
-  for (const cookie of source.cookies.getAll()) response.cookies.set(cookie);
-  return response;
+function clearAuthCookies(response: NextResponse, request: NextRequest) {
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.startsWith("sb-") || cookie.name.includes("auth-token")) {
+      response.cookies.delete(cookie.name);
+    }
+  }
 }
 
 export async function proxy(request: NextRequest) {
@@ -29,18 +33,44 @@ export async function proxy(request: NextRequest) {
 
   const isPrivateRoute =
     pathname === "/dashboard" ||
+    pathname.startsWith("/dashboard/") ||
+    pathname === "/daily-learn" ||
     pathname.startsWith("/daily-learn/") ||
-    pathname.startsWith("/game/word-blaster") ||
-    ["/DailyLearnPage", "/ExercisePage", "/WordBlaster"].includes(pathname);
+    pathname === "/game" ||
+    pathname.startsWith("/game/") ||
+    [
+      "/DailyLearnPage",
+      "/ExercisePage",
+      "/WordBlaster",
+      "/WordIsland",
+      "/GameOver",
+    ].includes(pathname);
 
+  // If this is a public route (e.g. /, /privacy, /game/word-island, /auth):
+  // Let the client load instantly without any blocking server auth verification.
+  // The client components (AccountControl, AuthPage) handle auth states smoothly in the background.
+  if (!isPrivateRoute) {
+    return NextResponse.next();
+  }
+
+  // If Supabase credentials are missing on private routes, redirect to login
   if (!url || !key) {
-    if (!isPrivateRoute) return NextResponse.next();
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth";
     loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
     return NextResponse.redirect(loginUrl);
   }
 
+  // Fast-path: If user has no auth cookies at all, they cannot be authenticated
+  if (!hasSupabaseAuthCookie(request)) {
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/auth";
+    loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // User has auth cookies and is attempting to access a private route:
+  // Verify their session with Supabase with a strict 2.5s timeout.
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {
     cookies: {
@@ -53,23 +83,38 @@ export async function proxy(request: NextRequest) {
         }
       },
     },
+    global: {
+      fetch: (input, init) => {
+        const signal = init?.signal ?? AbortSignal.timeout(2500);
+        return fetch(input, { ...init, signal });
+      },
+    },
   });
 
-  const { data: { user }, error } = await supabase.auth.getUser();
-  const isAuthenticated = !error && user !== null;
+  let isAuthenticated = false;
+  try {
+    const authPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null }; error: Error }>((resolve) => {
+      const timer = setTimeout(() => {
+        resolve({ data: { user: null }, error: new Error("Auth verification timeout") });
+      }, 2500);
+      if (typeof timer.unref === "function") timer.unref();
+    });
 
-  if (isPrivateRoute && !isAuthenticated) {
+    const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+    isAuthenticated = !error && data.user !== null;
+  } catch {
+    isAuthenticated = false;
+  }
+
+  if (!isAuthenticated) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/auth";
     loginUrl.searchParams.set("next", pathname + request.nextUrl.search);
-    return redirectWithCookies(response, loginUrl);
-  }
-
-  if (isAuthenticated && (pathname === "/" || pathname === "/auth")) {
-    const destination = pathname === "/auth"
-      ? safeDestination(request, request.nextUrl.searchParams.get("next"), "/dashboard")
-      : "/dashboard";
-    return redirectWithCookies(response, new URL(destination, request.url));
+    const redirectRes = NextResponse.redirect(loginUrl);
+    // Clear stale cookies so subsequent requests don't keep retrying an invalid session
+    clearAuthCookies(redirectRes, request);
+    return redirectRes;
   }
 
   return response;

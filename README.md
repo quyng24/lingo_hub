@@ -74,6 +74,11 @@ Dự án hiện có **02 tựa game** hoàn chỉnh hỗ trợ rèn luyện từ
 - **Hạn chế tần suất request (Rate Limiting)**:
   - **Database Layer**: Trigger Postgres giới hạn tối thiểu 200ms giữa các lượt ghi của cùng một user.
   - **Client Layer**: Hàm `throttleRequest()` 250ms trong `LearningProgressService` ngăn ngừa spam request.
+- **Tuân thủ Quyền riêng tư, Trang Privacy Policy & Xóa tài khoản (GDPR / Google User Data Deletion)**:
+  - Cung cấp trang tĩnh **Chính sách quyền riêng tư** chuẩn mực tại [`/privacy`](src/app/privacy/page.tsx), minh bạch về dữ liệu Google OAuth, cơ chế RLS, và quyền của người dùng.
+  - Cung cấp tính năng xóa vĩnh viễn tài khoản và toàn bộ dữ liệu cá nhân (`AccountControl.tsx` và endpoint `/api/auth/delete-account`).
+  - RPC PostgreSQL `delete_user_account()` với cơ chế `SECURITY DEFINER` đảm bảo người dùng chỉ có thể xóa tài khoản của chính mình (`auth.uid()`), tự động xóa sạch tiến trình học, điểm số, chuỗi streak và liên kết Google OAuth.
+  - Modal xác nhận 2 bước yêu cầu gõ chữ "XÓA" để ngăn ngừa thao tác nhầm lẫn.
 
 ---
 
@@ -173,7 +178,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-publishable-or-anon-key
    - `20261007000000_initial_schema.sql`: Schema khởi tạo bảng từ vựng và câu hỏi bài tập.
    - `20261012000000_user_learning_progress.sql`: Bảng `user_word_progress` theo dõi tiến trình SRS từng user với Row Level Security.
    - `20261016000000_user_learning_stats.sql`: Khởi tạo bảng thống kê học tập và đếm streak.
-   - `20261021000000_security_and_rate_limits.sql`: Bảo mật RLS chống cào dữ liệu (Authenticated only), chống gian lận streak (tối đa +1/ngày), rate limiting và hàm RPC `record_word_review`.
+   - `20261021000000_security_and_rate_limits.sql`: Chống gian lận streak (tối đa +1/ngày), rate limiting và hàm RPC `record_word_review`.
+   - `20261022000000_account_deletion.sql`: Hàm RPC `delete_user_account()` hỗ trợ xóa vĩnh viễn tài khoản và giải phóng liên kết Google OAuth.
+   - `20261022010000_learning_materials_rls.sql`: Cấu hình RLS toàn diện bảo vệ 4 bảng học liệu (`vocabulary`, `exercise_questions`, `topics`, `topic_vocabulary`) - khóa toàn bộ quyền ghi client và chống cào trộm đề/đáp án.
 3. Trong **Authentication → URL Configuration**:
    - Thêm Redirect URL: `http://localhost:3000/auth/callback` và `http://localhost:3000/auth`.
 

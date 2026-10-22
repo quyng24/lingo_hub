@@ -9,6 +9,7 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
+import AccountControl from "@/components/AccountControl";
 
 const upcomingGames = [
   {
@@ -32,8 +33,11 @@ function GameLibraryPage() {
             <ArrowLeft className="w-4 h-4" />
             Bảng điều khiển
           </Link>
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400">
-            <Gamepad2 className="w-4 h-4" /> Game library
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-cyan-400">
+              <Gamepad2 className="w-4 h-4" /> Game library
+            </div>
+            <AccountControl />
           </div>
         </div>
       </header>

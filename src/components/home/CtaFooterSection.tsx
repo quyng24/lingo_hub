@@ -44,7 +44,11 @@ export default function CtaFooterSection() {
       <footer className="bg-zinc-950 border-t border-zinc-900 py-10 px-5 sm:px-6 text-zinc-500 text-xs font-mono">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <p>© {new Date().getFullYear()} LingoHub · Daily Learn & Game Hub Platform.</p>
-          <div className="flex items-center gap-4 text-zinc-400">
+          <div className="flex flex-wrap items-center gap-4 text-zinc-400">
+            <Link href="/privacy" className="hover:text-emerald-400 transition-colors underline underline-offset-4">
+              Chính sách quyền riêng tư
+            </Link>
+            <span>·</span>
             <span>Next.js 16</span>
             <span>·</span>
             <span>Supabase RLS</span>
@@ -56,4 +60,3 @@ export default function CtaFooterSection() {
     </>
   );
 }
-

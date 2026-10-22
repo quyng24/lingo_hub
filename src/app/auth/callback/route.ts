@@ -48,18 +48,38 @@ export async function GET(request: NextRequest) {
           });
         },
       },
+      global: {
+        fetch: (input, init) => {
+          const signal = init?.signal ?? AbortSignal.timeout(6000);
+          return fetch(input, { ...init, signal });
+        },
+      },
     });
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return redirectResponse;
-    }
+    try {
+      const exchangePromise = supabase.auth.exchangeCodeForSession(code);
+      const timeoutPromise = new Promise<{ error: Error }>((resolve) => {
+        const timer = setTimeout(() => resolve({ error: new Error("Hết thời gian kết nối xác thực Google OAuth. Vui lòng thử lại.") }), 6000);
+        if (typeof timer.unref === "function") timer.unref();
+      });
 
-    console.error("Supabase OAuth exchangeCodeForSession error:", error);
-    const errorUrl = new URL("/auth", origin);
-    errorUrl.searchParams.set("error", "oauth_failed");
-    errorUrl.searchParams.set("message", error.message);
-    return NextResponse.redirect(errorUrl);
+      const result = await Promise.race([exchangePromise, timeoutPromise]);
+      if (!result.error) {
+        return redirectResponse;
+      }
+
+      console.error("Supabase OAuth exchangeCodeForSession error:", result.error);
+      const errorUrl = new URL("/auth", origin);
+      errorUrl.searchParams.set("error", "oauth_failed");
+      errorUrl.searchParams.set("message", result.error.message);
+      return NextResponse.redirect(errorUrl);
+    } catch (err) {
+      console.error("Supabase OAuth unexpected error:", err);
+      const errorUrl = new URL("/auth", origin);
+      errorUrl.searchParams.set("error", "oauth_failed");
+      errorUrl.searchParams.set("message", err instanceof Error ? err.message : "Xác thực thất bại");
+      return NextResponse.redirect(errorUrl);
+    }
   }
 
   return NextResponse.redirect(new URL("/auth?error=oauth_failed", origin));

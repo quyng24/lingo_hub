@@ -103,7 +103,10 @@ export default function AuthPage() {
     const searchParams = new URL(window.location.href).searchParams;
     const errorParam = searchParams.get("error");
     const messageParam = searchParams.get("message");
-    if (errorParam === "oauth_failed") {
+    const deletedParam = searchParams.get("deleted");
+    if (deletedParam === "true") {
+      toast.success("Tài khoản và toàn bộ dữ liệu của bạn đã được xóa vĩnh viễn.");
+    } else if (errorParam === "oauth_failed") {
       toast.error(messageParam || "Đăng nhập bằng Google không thành công. Hãy thử lại.");
     } else if (errorParam === "missing_config") {
       toast.error("Hệ thống chưa cấu hình đầy đủ Supabase trong .env.local.");
@@ -302,6 +305,14 @@ export default function AuthPage() {
           >
             {mode === "sign-in" ? "Đăng ký ngay" : "Đăng nhập"}
           </button>
+        </p>
+
+        <p className="mt-4 text-center text-[11px] text-zinc-500">
+          Bằng việc tiếp tục, bạn đồng ý với{" "}
+          <Link href="/privacy" className="underline hover:text-emerald-400 transition-colors">
+            Chính sách quyền riêng tư
+          </Link>{" "}
+          của LingoHub.
         </p>
       </section>
     </main>
