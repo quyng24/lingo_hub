@@ -38,6 +38,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/daily-learn/") ||
     pathname === "/game" ||
     pathname.startsWith("/game/") ||
+    pathname === "/support" ||
+    pathname.startsWith("/support/") ||
     [
       "/DailyLearnPage",
       "/ExercisePage",

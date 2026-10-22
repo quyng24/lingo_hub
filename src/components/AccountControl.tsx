@@ -9,6 +9,7 @@ import {
   Gamepad2,
   GraduationCap,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   Shield,
   ShieldAlert,
@@ -285,6 +286,16 @@ export default function AccountControl() {
               >
                 <Gamepad2 className="w-3.5 h-3.5 text-cyan-400" />
                 <span>Game từ vựng</span>
+              </Link>
+
+              <Link
+                href="/support"
+                onClick={() => setIsMenuOpen(false)}
+                role="menuitem"
+                className="flex items-center gap-2.5 px-2.5 py-2 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-900 transition-colors"
+              >
+                <LifeBuoy className="w-3.5 h-3.5 text-amber-400" />
+                <span>Hỗ trợ & Báo lỗi</span>
               </Link>
             </div>
 
