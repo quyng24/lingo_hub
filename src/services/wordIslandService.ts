@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/apiClient';
 import type { DynamicQuest, QuestWordInfo, VocabQuestion, VocabQuestionOption } from '@/types';
 import { DEFAULT_FALLBACK_QUEST, ISLAND_THEMES } from '@/utils/wordIslandThemes';
+import { getFallbackQuestForTheme } from '@/utils/wordIslandData';
 
 const AVAILABLE_TOPICS = [
   'animals',
@@ -58,7 +59,7 @@ export class WordIslandService {
 
       if (linksError || !links || links.length < 7) {
         console.warn('WordIslandService: Not enough words in topic, using fallback', linksError);
-        return DEFAULT_FALLBACK_QUEST;
+        return getFallbackQuestForTheme(randomTopicId);
       }
 
       // Shuffle and pick 7 word IDs
@@ -72,7 +73,7 @@ export class WordIslandService {
 
       if (vocabError || !vocabRows || vocabRows.length < 7) {
         console.warn('WordIslandService: Vocabulary query failed, using fallback', vocabError);
-        return DEFAULT_FALLBACK_QUEST;
+        return getFallbackQuestForTheme(randomTopicId);
       }
 
       // 4. Fetch exercise questions for these 7 words
@@ -83,7 +84,7 @@ export class WordIslandService {
 
       if (questionsError || !questionRows || questionRows.length < 7) {
         console.warn('WordIslandService: Questions query failed, using fallback', questionsError);
-        return DEFAULT_FALLBACK_QUEST;
+        return getFallbackQuestForTheme(randomTopicId);
       }
 
       // Map rows by word_id
@@ -158,7 +159,7 @@ export class WordIslandService {
       }
 
       if (orderedWords.length < 7 || orderedQuestions.length < 7) {
-        return DEFAULT_FALLBACK_QUEST;
+        return getFallbackQuestForTheme(randomTopicId);
       }
 
       return {

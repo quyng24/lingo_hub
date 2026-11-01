@@ -16,6 +16,7 @@ interface WordIslandStore {
   setResources: (resources: Resources) => void;
   addWood: () => void;
   addStone: () => void;
+  activateSubStation: () => void;
   setIsPaused: (paused: boolean | ((prev: boolean) => boolean)) => void;
   togglePause: () => void;
   setDialogue: (dialogue: DialogueState | null) => void;
@@ -30,6 +31,7 @@ const INITIAL_RESOURCES: Resources = {
   stone: 0,
   hasAxe: false,
   hasGateKey: false,
+  subStationsActivated: 0,
 };
 
 export const useWordIslandStore = create<WordIslandStore>()((set) => ({
@@ -50,6 +52,13 @@ export const useWordIslandStore = create<WordIslandStore>()((set) => ({
   addStone: () =>
     set((state) => ({
       resources: { ...state.resources, stone: state.resources.stone + 1 },
+    })),
+  activateSubStation: () =>
+    set((state) => ({
+      resources: {
+        ...state.resources,
+        subStationsActivated: (state.resources.subStationsActivated || 0) + 1,
+      },
     })),
   setIsPaused: (paused) =>
     set((state) => ({

@@ -32,6 +32,8 @@ export default function WordIsland() {
       {/* Navigation Header */}
       <TopBar
         isPaused={isPaused}
+        realmTitle={theme.realmTitle}
+        badgeEmoji={theme.badgeEmoji}
         onTogglePause={() => setIsPaused((p) => !p)}
         onRestart={handleRestart}
       />
@@ -53,7 +55,16 @@ export default function WordIsland() {
             resources={resources}
             objectiveText={getObjectiveText()}
             toolNameVi={theme.toolNameVi}
+            toolIcon={theme.toolIcon}
+            keyNameVi={theme.gateNameVi}
+            keyIcon={theme.gateIcon}
             realmTitle={theme.realmTitle}
+            badgeEmoji={theme.badgeEmoji}
+            primaryResource={theme.primaryResource}
+            secondaryResource={theme.secondaryResource}
+            specialMission={theme.specialMission}
+            reqPrimary={theme.reqPrimary}
+            reqSecondary={theme.reqSecondary}
             onInteract={handleInteract}
           />
 

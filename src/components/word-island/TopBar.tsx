@@ -3,12 +3,16 @@ import { ArrowLeft, Play, Pause, RotateCcw } from 'lucide-react';
 
 interface TopBarProps {
   isPaused: boolean;
+  realmTitle?: string;
+  badgeEmoji?: string;
   onTogglePause: () => void;
   onRestart: () => void;
 }
 
 export default function TopBar({
   isPaused,
+  realmTitle,
+  badgeEmoji = '🏝️',
   onTogglePause,
   onRestart,
 }: TopBarProps) {
@@ -24,11 +28,17 @@ export default function TopBar({
           <span className="sm:hidden">Game</span>
         </Link>
         <h1 className="text-sm sm:text-base font-black text-amber-300 tracking-wide flex items-center gap-1.5">
-          <span>🏝️</span>
+          <span>{badgeEmoji}</span>
           <span>WORD ISLAND</span>
-          <span className="hidden md:inline text-xs text-amber-400/80 font-normal">
-            (Đảo Từ Vựng 2D)
-          </span>
+          {realmTitle ? (
+            <span className="hidden md:inline text-xs text-amber-400/80 font-normal">
+              · {realmTitle}
+            </span>
+          ) : (
+            <span className="hidden md:inline text-xs text-amber-400/80 font-normal">
+              (Đảo Từ Vựng 2D)
+            </span>
+          )}
         </h1>
       </div>
 

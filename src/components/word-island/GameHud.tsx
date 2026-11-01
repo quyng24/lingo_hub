@@ -1,11 +1,19 @@
-import type { Resources } from "@/types";
+import type { RealmSpecialMission, Resources, ThemedResourceDef } from "@/types";
 
 interface GameHudProps {
   resources: Resources;
   objectiveText: string;
   toolNameVi?: string;
+  toolIcon?: string;
   keyNameVi?: string;
+  keyIcon?: string;
   realmTitle?: string;
+  badgeEmoji?: string;
+  primaryResource?: ThemedResourceDef;
+  secondaryResource?: ThemedResourceDef;
+  specialMission?: RealmSpecialMission;
+  reqPrimary?: number;
+  reqSecondary?: number;
   onInteract: () => void;
 }
 
@@ -13,10 +21,23 @@ export default function GameHud({
   resources,
   objectiveText,
   toolNameVi = "Rìu Sinh Tồn",
+  toolIcon = "🪓",
   keyNameVi = "Chìa Khóa Cổng",
+  keyIcon = "🗝️",
   realmTitle,
+  badgeEmoji = "🏝️",
+  primaryResource,
+  secondaryResource,
+  specialMission,
+  reqPrimary = 3,
+  reqSecondary = 2,
   onInteract,
 }: GameHudProps) {
+  const pName = primaryResource?.nameVi || "Gỗ";
+  const pIcon = primaryResource?.icon || "🪵";
+  const sName = secondaryResource?.nameVi || "Đá";
+  const sIcon = secondaryResource?.icon || "🪨";
+
   return (
     <>
       {/* Top Left: Inventory HUD */}
@@ -26,32 +47,40 @@ export default function GameHud({
             Túi đồ (Inventory)
           </div>
           {realmTitle && (
-            <span className="text-[10px] text-amber-400/80 font-mono hidden sm:inline">
-              📍 {realmTitle}
+            <span className="text-[10px] text-amber-400/90 font-mono hidden sm:inline font-bold">
+              {badgeEmoji} {realmTitle}
             </span>
           )}
         </div>
         <div className="flex items-center gap-3 text-[11px] sm:text-xs">
           <span>
-            🪵 Gỗ:{" "}
+            {pIcon} {pName}:{" "}
             <strong className="text-emerald-300 font-bold">
-              {resources.wood}
+              {resources.wood}/{reqPrimary}
             </strong>
           </span>
           <span>
-            🪨 Đá:{" "}
+            {sIcon} {sName}:{" "}
             <strong className="text-slate-200 font-bold">
-              {resources.stone}
+              {resources.stone}/{reqSecondary}
             </strong>
           </span>
         </div>
+        {specialMission && (
+          <div className="text-[10px] sm:text-[11px] text-cyan-300 font-medium">
+            {specialMission.subStationIcon} {specialMission.subStationNameVi}:{" "}
+            <strong className="text-white font-bold">
+              {resources.subStationsActivated || 0}/{specialMission.targetCount}
+            </strong>
+          </div>
+        )}
         <div className="flex items-center gap-2 pt-1 border-t border-slate-700 text-[10px] sm:text-[11px]">
           <span
             className={
               resources.hasAxe ? "text-emerald-400 font-bold" : "text-slate-400"
             }
           >
-            🪓 {resources.hasAxe ? toolNameVi : `Chưa có ${toolNameVi}`}
+            {toolIcon} {resources.hasAxe ? toolNameVi : `Chưa có ${toolNameVi}`}
           </span>
           <span className="text-slate-600">•</span>
           <span
@@ -61,7 +90,7 @@ export default function GameHud({
                 : "text-slate-400"
             }
           >
-            🗝️ {resources.hasGateKey ? keyNameVi : "Chưa có khóa"}
+            {keyIcon} {resources.hasGateKey ? keyNameVi : "Chưa có khóa"}
           </span>
         </div>
       </div>

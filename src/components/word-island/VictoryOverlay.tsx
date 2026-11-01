@@ -47,7 +47,13 @@ export default function VictoryOverlay({
         </div>
 
         <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-          Xuất sắc! Bạn đã thu thập đủ tài nguyên, cùng <strong>{mentorName}</strong> giải mã các thử thách ngữ cảnh, mở khóa <strong>{gateName}</strong> và làm chủ <strong>{words.length} từ vựng</strong>!
+          {theme?.victoryLoreVi ? (
+            theme.victoryLoreVi
+          ) : (
+            <>
+              Xuất sắc! Bạn đã thu thập đủ tài nguyên, cùng <strong>{mentorName}</strong> giải mã các thử thách ngữ cảnh, mở khóa <strong>{gateName}</strong> và làm chủ <strong>{words.length} từ vựng</strong>!
+            </>
+          )}
         </p>
 
         {/* Vocabulary Cards Section */}

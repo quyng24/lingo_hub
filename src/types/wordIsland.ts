@@ -11,11 +11,22 @@ export interface Resources {
   stone: number;
   hasAxe: boolean;
   hasGateKey: boolean;
+  subStationsActivated: number;
 }
+
+export type WorldObjectType =
+  | 'tree'
+  | 'rock'
+  | 'npc'
+  | 'camp'
+  | 'chest'
+  | 'gate'
+  | 'sub_station';
 
 export interface WorldObject {
   id: string;
-  type: 'tree' | 'rock' | 'npc' | 'camp' | 'chest' | 'gate';
+  type: WorldObjectType;
+  subType?: string;
   x: number;
   y: number;
   width: number;
@@ -25,6 +36,9 @@ export interface WorldObject {
   depleted?: boolean;
   respawnAt?: number;
   opened?: boolean;
+  activated?: boolean;
+  customSpriteKey?: string;
+  question?: VocabQuestion;
 }
 
 export interface FloatingText {
@@ -67,20 +81,84 @@ export interface QuestWordInfo {
   difficulty?: string;
 }
 
+export type EnvironmentStyle =
+  | 'tropical'
+  | 'cyber'
+  | 'cosmic'
+  | 'tempest'
+  | 'sports'
+  | 'action'
+  | 'emotions'
+  | 'shipwreck';
+
+export type MentorSpriteType =
+  | 'ranger'
+  | 'engineer'
+  | 'astronomer'
+  | 'storm_chaser'
+  | 'coach'
+  | 'warrior'
+  | 'sage'
+  | 'captain';
+
+export type CenterPieceType =
+  | 'camp'
+  | 'server'
+  | 'beacon'
+  | 'weather_tower'
+  | 'olympic_flame'
+  | 'watchpost'
+  | 'altar';
+
+export interface ThemedResourceDef {
+  nameEn: string;
+  nameVi: string;
+  icon: string;
+  sourceNameVi: string;
+  color: string;
+  harvestTextVi: string;
+}
+
+export interface RealmSpecialMission {
+  subStationType: string;
+  subStationNameVi: string;
+  subStationIcon: string;
+  targetCount: number;
+  missionTitleVi: string;
+  actionPromptVi: string;
+  successMsgVi: string;
+}
+
 export interface IslandTheme {
   id: string;
   name: string;
   realmTitle: string;
   mentorName: string;
   mentorRole: string;
-  introStoryEn: string;
-  introStoryVi: string;
+  mentorSprite: MentorSpriteType;
+  centerPieceType: CenterPieceType;
+  environmentStyle: EnvironmentStyle;
+  primaryResource: ThemedResourceDef;
+  secondaryResource: ThemedResourceDef;
+  reqPrimary: number;
+  reqSecondary: number;
+  playerSpawn: { x: number; y: number };
+  specialMission: RealmSpecialMission;
   toolNameEn: string;
   toolNameVi: string;
+  toolIcon: string;
   chestNameEn: string;
   chestNameVi: string;
+  chestIcon?: string;
   gateNameEn: string;
   gateNameVi: string;
+  gateIcon?: string;
+  introStoryEn: string;
+  introStoryVi: string;
+  barrierEn: string;
+  barrierVi: string;
+  victoryLoreVi: string;
+  badgeEmoji: string;
 }
 
 export interface DynamicQuest {
@@ -129,15 +207,29 @@ export interface PlayerState {
   walkFrame: number;
 }
 
+export interface AmbientParticle {
+  x: number;
+  y: number;
+  speedX: number;
+  speedY: number;
+  size: number;
+  color: string;
+  alpha: number;
+  life: number;
+  maxLife: number;
+}
+
 export interface GameEngineState {
   player: PlayerState;
   keys: Record<string, boolean>;
   objects: WorldObject[];
   floatingTexts: FloatingText[];
+  ambientParticles: AmbientParticle[];
   nearestObject: WorldObject | null;
   shakeTime: number;
   questStage: QuestStage;
   resources: Resources;
   overlayOpen: boolean;
   paused: boolean;
+  activeMap: number[][];
 }

@@ -4,11 +4,11 @@ import { useWordIslandStore } from '@/stores/wordIslandStore';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
-  INITIAL_OBJECTS,
-  ISLAND_MAP,
   MAP_COLS,
   MAP_ROWS,
   TILE_SIZE,
+  getMapForTheme,
+  getObjectsForTheme,
 } from '@/utils/wordIslandData';
 import { renderGameScene } from '@/utils/wordIslandRenderer';
 
@@ -35,8 +35,8 @@ export function useWordIsland() {
   // Mutable 60fps loop state
   const gameRef = useRef<GameEngineState>({
     player: {
-      x: 9.5 * TILE_SIZE,
-      y: 10.5 * TILE_SIZE,
+      x: theme.playerSpawn?.x ?? 9.5 * TILE_SIZE,
+      y: theme.playerSpawn?.y ?? 10.5 * TILE_SIZE,
       width: 28,
       height: 28,
       speed: 190,
@@ -44,14 +44,16 @@ export function useWordIsland() {
       walkFrame: 0,
     },
     keys: {},
-    objects: INITIAL_OBJECTS.map((obj) => ({ ...obj })),
+    objects: getObjectsForTheme(theme),
     floatingTexts: [],
+    ambientParticles: [],
     nearestObject: null,
     shakeTime: 0,
     questStage: 'TALK_TO_NPC',
-    resources: { wood: 0, stone: 0, hasAxe: false, hasGateKey: false },
+    resources: { wood: 0, stone: 0, hasAxe: false, hasGateKey: false, subStationsActivated: 0 },
     overlayOpen: false,
     paused: false,
+    activeMap: getMapForTheme(theme),
   });
 
   // Load new dynamic quest on mount if not loaded yet
@@ -59,17 +61,14 @@ export function useWordIsland() {
     loadNewQuest();
   }, [loadNewQuest]);
 
-  // Update object labels according to active theme
+  // Update objects, player position & map matrix whenever theme changes
   useEffect(() => {
-    gameRef.current.objects.forEach((obj) => {
-      if (obj.type === 'npc') {
-        obj.label = `${theme.mentorName} (${theme.mentorRole})`;
-      } else if (obj.type === 'chest') {
-        obj.label = theme.chestNameVi;
-      } else if (obj.type === 'gate') {
-        obj.label = theme.gateNameVi;
-      }
-    });
+    gameRef.current.activeMap = getMapForTheme(theme);
+    gameRef.current.objects = getObjectsForTheme(theme);
+    if (theme.playerSpawn) {
+      gameRef.current.player.x = theme.playerSpawn.x;
+      gameRef.current.player.y = theme.playerSpawn.y;
+    }
   }, [theme]);
 
   // Sync store flags into ref for 60fps loop
@@ -100,9 +99,11 @@ export function useWordIsland() {
 
   // Clean Restart with a fresh dynamic quest
   const handleRestart = useCallback(() => {
+    const spawnX = theme.playerSpawn?.x ?? 9.5 * TILE_SIZE;
+    const spawnY = theme.playerSpawn?.y ?? 10.5 * TILE_SIZE;
     gameRef.current.player = {
-      x: 9.5 * TILE_SIZE,
-      y: 10.5 * TILE_SIZE,
+      x: spawnX,
+      y: spawnY,
       width: 28,
       height: 28,
       speed: 190,
@@ -110,14 +111,15 @@ export function useWordIsland() {
       walkFrame: 0,
     };
     gameRef.current.keys = {};
-    gameRef.current.objects = INITIAL_OBJECTS.map((obj) => ({ ...obj }));
+    gameRef.current.objects = getObjectsForTheme(theme);
+    gameRef.current.activeMap = getMapForTheme(theme);
     gameRef.current.floatingTexts = [];
     gameRef.current.nearestObject = null;
     gameRef.current.shakeTime = 0;
 
     resetGame();
     loadNewQuest();
-  }, [resetGame, loadNewQuest]);
+  }, [resetGame, loadNewQuest, theme]);
 
   // Interaction dispatcher
   const handleInteract = useCallback(() => {
@@ -127,7 +129,11 @@ export function useWordIsland() {
     const target = state.nearestObject;
     if (!target) return;
 
-    // 1. Tree harvesting
+    const reqPrimary = theme.reqPrimary ?? 3;
+    const reqSecondary = theme.reqSecondary ?? 2;
+    const reqSub = theme.specialMission?.targetCount ?? 0;
+
+    // 1. Primary Resource Harvesting (Tree Node equivalent)
     if (target.type === 'tree' && !target.depleted) {
       target.depleted = true;
       target.solid = false;
@@ -138,25 +144,31 @@ export function useWordIsland() {
       const updated = { ...state.resources, wood: nextWood };
       state.resources = updated;
       setResources(updated);
-      spawnFloatingText(target.x + 16, target.y, '+1 Wood (Gỗ)', '#86efac');
+      spawnFloatingText(
+        target.x + 16,
+        target.y,
+        theme.primaryResource.harvestTextVi,
+        theme.primaryResource.color
+      );
 
       if (
         state.questStage === 'GATHER_RESOURCES' &&
-        updated.wood >= 3 &&
-        updated.stone >= 2
+        updated.wood >= reqPrimary &&
+        updated.stone >= reqSecondary &&
+        (updated.subStationsActivated || 0) >= reqSub
       ) {
         setQuestStage('CRAFT_PUZZLE');
         spawnFloatingText(
           state.player.x,
           state.player.y - 16,
-          `Đã đủ nguyên liệu! Hãy gặp ${theme.mentorName}!`,
+          `Đã đủ nguyên liệu & hoàn thành nhiệm vụ! Hãy gặp ${theme.mentorName}!`,
           '#fde047'
         );
       }
       return;
     }
 
-    // 2. Rock harvesting
+    // 2. Secondary Resource Harvesting (Rock Node equivalent)
     if (target.type === 'rock' && !target.depleted) {
       target.depleted = true;
       target.solid = false;
@@ -167,31 +179,110 @@ export function useWordIsland() {
       const updated = { ...state.resources, stone: nextStone };
       state.resources = updated;
       setResources(updated);
-      spawnFloatingText(target.x + 16, target.y, '+1 Stone (Đá)', '#cbd5e1');
+      spawnFloatingText(
+        target.x + 16,
+        target.y,
+        theme.secondaryResource.harvestTextVi,
+        theme.secondaryResource.color
+      );
 
       if (
         state.questStage === 'GATHER_RESOURCES' &&
-        updated.wood >= 3 &&
-        updated.stone >= 2
+        updated.wood >= reqPrimary &&
+        updated.stone >= reqSecondary &&
+        (updated.subStationsActivated || 0) >= reqSub
       ) {
         setQuestStage('CRAFT_PUZZLE');
         spawnFloatingText(
           state.player.x,
           state.player.y - 16,
-          `Đã đủ nguyên liệu! Hãy gặp ${theme.mentorName}!`,
+          `Đã đủ nguyên liệu & hoàn thành nhiệm vụ! Hãy gặp ${theme.mentorName}!`,
           '#fde047'
         );
       }
       return;
     }
 
-    // 3. Campfire
-    if (target.type === 'camp') {
-      spawnFloatingText(target.x + 10, target.y - 8, 'Lửa trại ấm áp (Campfire)!', '#fb923c');
+    // 2.5. Realm Special Quest Sub-Station Interaction
+    if (target.type === 'sub_station') {
+      if (target.activated) {
+        spawnFloatingText(
+          target.x + 18,
+          target.y - 10,
+          `Đã hoàn thành: ${target.label}!`,
+          '#86efac'
+        );
+        return;
+      }
+
+      if (!target.question) {
+        target.activated = true;
+        const nextSub = (state.resources.subStationsActivated || 0) + 1;
+        const updated = { ...state.resources, subStationsActivated: nextSub };
+        state.resources = updated;
+        setResources(updated);
+        spawnFloatingText(
+          target.x + 18,
+          target.y - 10,
+          theme.specialMission?.successMsgVi || 'Đã hoàn thành mục tiêu!',
+          '#22c55e'
+        );
+        return;
+      }
+
+      state.keys = {};
+      setActiveQuiz({
+        questions: [target.question],
+        currentIndex: 0,
+        selectedFeedback: null,
+        onComplete: () => {
+          target.activated = true;
+          const nextSub = (state.resources.subStationsActivated || 0) + 1;
+          const updated = { ...state.resources, subStationsActivated: nextSub };
+          state.resources = updated;
+          setResources(updated);
+          setActiveQuiz(null);
+
+          spawnFloatingText(
+            target.x + 18,
+            target.y - 12,
+            theme.specialMission?.successMsgVi || 'Đã kích hoạt thành công!',
+            '#22c55e'
+          );
+
+          if (
+            state.questStage === 'GATHER_RESOURCES' &&
+            updated.wood >= reqPrimary &&
+            updated.stone >= reqSecondary &&
+            updated.subStationsActivated >= reqSub
+          ) {
+            setQuestStage('CRAFT_PUZZLE');
+            spawnFloatingText(
+              state.player.x,
+              state.player.y - 16,
+              `Đã hoàn thành nhiệm vụ & thu thập đủ nguyên liệu! Hãy gặp ${theme.mentorName}!`,
+              '#fde047'
+            );
+          }
+        },
+      });
       return;
     }
 
-    // 4. NPC Mentor Interaction
+    // 3. Centerpiece Structure (Camp / Server / Beacon / Altar)
+    if (target.type === 'camp') {
+      let flavorMsg = 'Lửa trại ấm áp (Campfire)!';
+      if (theme.centerPieceType === 'server') flavorMsg = 'Máy chủ trung tâm đang chạy (Mainframe Active)!';
+      else if (theme.centerPieceType === 'beacon') flavorMsg = 'Ăng-ten ngân hà đang định vị (Beacon Online)!';
+      else if (theme.centerPieceType === 'weather_tower') flavorMsg = 'Tháp khí tượng cảnh báo bão (Storm Warning)!';
+      else if (theme.centerPieceType === 'olympic_flame') flavorMsg = 'Ngọn đuốc Olympic rực cháy (Olympic Flame)!';
+      else if (theme.centerPieceType === 'altar') flavorMsg = 'Đài sen thanh tịnh thơm ngát (Zen Altar)!';
+
+      spawnFloatingText(target.x + 10, target.y - 8, flavorMsg, '#38bdf8');
+      return;
+    }
+
+    // 4. Mentor NPC Interaction
     if (target.type === 'npc') {
       state.keys = {};
       if (state.questStage === 'TALK_TO_NPC') {
@@ -209,7 +300,12 @@ export function useWordIsland() {
                   currentIndex: 0,
                   selectedFeedback: null,
                   onComplete: () => {
-                    if (state.resources.wood >= 3 && state.resources.stone >= 2) {
+                    const currentSub = state.resources.subStationsActivated || 0;
+                    if (
+                      state.resources.wood >= reqPrimary &&
+                      state.resources.stone >= reqSecondary &&
+                      currentSub >= reqSub
+                    ) {
                       setQuestStage('CRAFT_PUZZLE');
                     } else {
                       setQuestStage('GATHER_RESOURCES');
@@ -218,7 +314,7 @@ export function useWordIsland() {
                     spawnFloatingText(
                       state.player.x,
                       state.player.y - 16,
-                      'Nhiệm vụ: Thu thập 3 Gỗ & 2 Đá!',
+                      `Nhiệm vụ: ${theme.specialMission?.missionTitleVi || 'Khám phá'} & Thu thập nguyên liệu!`,
                       '#38bdf8'
                     );
                   },
@@ -228,16 +324,21 @@ export function useWordIsland() {
           ],
         });
       } else if (state.questStage === 'GATHER_RESOURCES') {
-        if (state.resources.wood >= 3 && state.resources.stone >= 2) {
+        const currentSub = state.resources.subStationsActivated || 0;
+        if (
+          state.resources.wood >= reqPrimary &&
+          state.resources.stone >= reqSecondary &&
+          currentSub >= reqSub
+        ) {
           setQuestStage('CRAFT_PUZZLE');
         } else {
           setDialogue({
             speaker: `${theme.mentorName} (${theme.mentorRole})`,
-            en: `We still need 3 Wood and 2 Stone to forge the ${theme.toolNameEn}. You currently have ${state.resources.wood}/3 Wood and ${state.resources.stone}/2 Stone.`,
-            vi: `Tôi vẫn cần 3 Gỗ và 2 Đá để chế tạo ${theme.toolNameVi}. Bạn hiện có ${state.resources.wood}/3 Gỗ và ${state.resources.stone}/2 Đá. Hãy ấn [E] gần cây và tảng đá nhé!`,
+            en: `To forge the ${theme.toolNameEn}, we need ${reqPrimary} ${theme.primaryResource.nameEn} (${state.resources.wood}/${reqPrimary}), ${reqSecondary} ${theme.secondaryResource.nameEn} (${state.resources.stone}/${reqSecondary}), and ${theme.specialMission?.missionTitleVi || 'special tasks'} (${currentSub}/${reqSub}).`,
+            vi: `Để chế tạo ${theme.toolNameVi}, chúng ta cần:\n• ${theme.primaryResource.nameVi}: ${state.resources.wood}/${reqPrimary}\n• ${theme.secondaryResource.nameVi}: ${state.resources.stone}/${reqSecondary}\n• ${theme.specialMission?.missionTitleVi || 'Mục tiêu phụ'}: ${currentSub}/${reqSub}.\nHãy khám phá bản đồ và hoàn thành nhé!`,
             choices: [
               {
-                label: 'Tôi sẽ tiếp tục thu thập! (Understood)',
+                label: 'Tôi sẽ tiếp tục làm nhiệm vụ! (Understood)',
                 action: () => setDialogue(null),
               },
             ],
@@ -246,8 +347,8 @@ export function useWordIsland() {
       } else if (state.questStage === 'CRAFT_PUZZLE') {
         setDialogue({
           speaker: `${theme.mentorName} (${theme.mentorRole})`,
-          en: `Great job bringing the wood and stone! Answer these two English vocabulary questions so we can forge the ${theme.toolNameEn}!`,
-          vi: `Tuyệt lắm, bạn đã mang đủ gỗ và đá! Hãy trả lời 2 câu hỏi từ vựng để hoàn thiện ${theme.toolNameVi} nhé.`,
+          en: `Great job bringing the materials! Answer these two English vocabulary questions so we can forge the ${theme.toolNameEn}!`,
+          vi: `Tuyệt lắm, bạn đã mang đủ nguyên liệu! Hãy vượt qua 2 câu hỏi từ vựng để hoàn thiện ${theme.toolNameVi} nhé.`,
           choices: [
             {
               label: `Bắt đầu giải đố chế tạo ${theme.toolNameVi}`,
@@ -271,7 +372,7 @@ export function useWordIsland() {
                     spawnFloatingText(
                       state.player.x,
                       state.player.y - 16,
-                      `Nhận ${theme.toolNameVi}!`,
+                      `Nhận ${theme.toolIcon} ${theme.toolNameVi}!`,
                       '#38bdf8'
                     );
                   },
@@ -284,29 +385,29 @@ export function useWordIsland() {
         setDialogue({
           speaker: `${theme.mentorName} (${theme.mentorRole})`,
           en: state.resources.hasGateKey
-            ? `You have the Gate Key! Head north to the ${theme.gateNameEn} and pass the final boss trial!`
-            : `Use your ${theme.toolNameEn} on the ${theme.chestNameEn} on the east shore!`,
+            ? `You have the Key! Head north to the ${theme.gateNameEn} and pass the final boss trial!`
+            : `Use your ${theme.toolNameEn} on the ${theme.chestNameEn} on the east side!`,
           vi: state.resources.hasGateKey
-            ? `Bạn đã có Chìa Khóa! Hãy đi lên phía Bắc tới ${theme.gateNameVi} và vượt qua thử thách cuối cùng để thoát hiểm!`
-            : `Hãy dùng ${theme.toolNameVi} vừa chế tạo để mở ${theme.chestNameVi} ở phía Đông hòn đảo nhé!`,
+            ? `Bạn đã có Chìa Khóa! Hãy tiến lên phía Bắc tới ${theme.gateNameVi} để vượt qua thử thách cuối cùng!`
+            : `Hãy dùng ${theme.toolNameVi} vừa chế tạo để mở ${theme.chestNameVi} ở phía Đông nhé!`,
           choices: [{ label: 'Đã hiểu! (Đóng)', action: () => setDialogue(null) }],
         });
       }
       return;
     }
 
-    // 5. Supply Chest
+    // 5. Supply Chest / Data Cache
     if (target.type === 'chest') {
       state.keys = {};
       if (target.opened) {
-        spawnFloatingText(target.x, target.y - 10, 'Rương đã mở! (Empty)', '#94a3b8');
+        spawnFloatingText(target.x, target.y - 10, 'Đã mở! (Empty)', '#94a3b8');
         return;
       }
       if (!state.resources.hasAxe) {
         setDialogue({
           speaker: `${theme.chestNameVi} (${theme.chestNameEn})`,
-          en: `Thick barriers seal this chest. You need the ${theme.toolNameEn} from ${theme.mentorName} to open it!`,
-          vi: `Rào cản dày đặc bao bọc chiếc rương này. Bạn cần ${theme.toolNameVi} từ ${theme.mentorName} để mở!`,
+          en: `${theme.barrierEn} seals this cache. You need the ${theme.toolNameEn} from ${theme.mentorName} to open it!`,
+          vi: `${theme.barrierVi} đang phong ấn nơi này. Bạn cần ${theme.toolNameVi} từ ${theme.mentorName} để mở!`,
           choices: [
             {
               label: `Quay lại gặp ${theme.mentorName}`,
@@ -328,20 +429,20 @@ export function useWordIsland() {
           setResources(updated);
           setQuestStage('UNLOCK_GATE');
           setActiveQuiz(null);
-          spawnFloatingText(target.x, target.y - 12, 'Nhận Chìa Khóa Cổng & Nhu Yếu Phẩm!', '#facc15');
+          spawnFloatingText(target.x, target.y - 12, `Nhận Chìa Khóa ${theme.gateNameVi}!`, '#facc15');
         },
       });
       return;
     }
 
-    // 6. Escape Gate
+    // 6. Escape Gate / Warp Stargate
     if (target.type === 'gate') {
       state.keys = {};
       if (!state.resources.hasGateKey) {
         setDialogue({
           speaker: `${theme.gateNameVi} (${theme.gateNameEn})`,
-          en: `The ancient gate is firmly locked. Find the Gate Key inside the ${theme.chestNameEn} first!`,
-          vi: `Cánh cổng đá đang bị khóa chặt. Hãy tìm Chìa Khóa bên trong ${theme.chestNameVi} trước nhé!`,
+          en: `The gate is sealed. Retrieve the access key from the ${theme.chestNameEn} first!`,
+          vi: `${theme.gateNameVi} đang bị khóa. Hãy tìm Chìa Khóa bên trong ${theme.chestNameVi} trước nhé!`,
           choices: [{ label: 'Quay lại', action: () => setDialogue(null) }],
         });
         return;
@@ -417,9 +518,10 @@ export function useWordIsland() {
       py: number,
       pw: number,
       ph: number,
-      objects: WorldObject[]
+      objects: WorldObject[],
+      mapMatrix: number[][]
     ): boolean => {
-      // 1. Tilemap Water Boundaries
+      // 1. Tilemap Boundaries
       const startCol = Math.floor(px / TILE_SIZE);
       const endCol = Math.floor((px + pw) / TILE_SIZE);
       const startRow = Math.floor(py / TILE_SIZE);
@@ -428,7 +530,7 @@ export function useWordIsland() {
       for (let r = startRow; r <= endRow; r++) {
         for (let c = startCol; c <= endCol; c++) {
           if (r < 0 || r >= MAP_ROWS || c < 0 || c >= MAP_COLS) return true;
-          if (ISLAND_MAP[r][c] === 0) return true;
+          if (mapMatrix[r]?.[c] === 0) return true;
         }
       }
 
@@ -455,7 +557,7 @@ export function useWordIsland() {
     const update = (dt: number, now: number) => {
       const state = gameRef.current;
 
-      // Handle Respawn of Trees/Rocks
+      // Handle Respawn of Resource Nodes
       state.objects.forEach((obj) => {
         if (obj.depleted && obj.respawnAt && now >= obj.respawnAt) {
           obj.depleted = false;
@@ -490,12 +592,12 @@ export function useWordIsland() {
           player.walkFrame += dt * 8;
 
           const newX = player.x + dx * player.speed * dt;
-          if (!isCollidingWithWorld(newX, player.y, player.width, player.height, state.objects)) {
+          if (!isCollidingWithWorld(newX, player.y, player.width, player.height, state.objects, state.activeMap)) {
             player.x = newX;
           }
 
           const newY = player.y + dy * player.speed * dt;
-          if (!isCollidingWithWorld(player.x, newY, player.width, player.height, state.objects)) {
+          if (!isCollidingWithWorld(player.x, newY, player.width, player.height, state.objects, state.activeMap)) {
             player.y = newY;
           }
         } else {
@@ -542,26 +644,36 @@ export function useWordIsland() {
       const dt = Math.min((now - lastTime) / 1000, 0.1);
       lastTime = now;
       update(dt, now);
-      renderGameScene(ctx, gameRef.current, now);
+      renderGameScene(ctx, gameRef.current, theme, now);
       animationFrameId = requestAnimationFrame(loop);
     };
 
     animationFrameId = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, []);
+  }, [theme]);
 
   const getObjectiveText = () => {
+    const reqPrimary = theme.reqPrimary ?? 3;
+    const reqSecondary = theme.reqSecondary ?? 2;
+    const reqSub = theme.specialMission?.targetCount ?? 0;
+    const currentSub = resources.subStationsActivated || 0;
+
     switch (questStage) {
       case 'TALK_TO_NPC':
-        return `1. Gặp ${theme.mentorName} cạnh lửa trại [E] để bắt đầu`;
-      case 'GATHER_RESOURCES':
-        return `2. Thu thập 3 Gỗ (${resources.wood}/3) & 2 Đá (${resources.stone}/2)`;
+        return `1. Gặp ${theme.mentorName} tại ${theme.realmTitle} [E] để nhận nhiệm vụ`;
+      case 'GATHER_RESOURCES': {
+        const subProgress =
+          reqSub > 0
+            ? ` & ${theme.specialMission?.missionTitleVi || 'Nhiệm vụ phụ'} (${currentSub}/${reqSub})`
+            : '';
+        return `2. Thu thập ${reqPrimary} ${theme.primaryResource.nameVi} (${resources.wood}/${reqPrimary}) & ${reqSecondary} ${theme.secondaryResource.nameVi} (${resources.stone}/${reqSecondary})${subProgress}`;
+      }
       case 'CRAFT_PUZZLE':
-        return `3. Quay lại gặp ${theme.mentorName} chế tạo ${theme.toolNameVi}`;
+        return `3. Gặp ${theme.mentorName} chế tạo ${theme.toolNameVi}`;
       case 'UNLOCK_CHEST':
-        return `4. Dùng ${theme.toolNameVi} mở ${theme.chestNameVi} ở bờ biển Đông`;
+        return `4. Dùng ${theme.toolNameVi} mở ${theme.chestNameVi} [E]`;
       case 'UNLOCK_GATE':
-        return `5. Tra chìa khóa giải đố mở ${theme.gateNameVi} phía Bắc để thoát!`;
+        return `5. Tra chìa khóa giải đố mở ${theme.gateNameVi} để hoàn thành [E]!`;
       case 'VICTORY':
         return `Chiến thắng! Bạn đã chinh phục ${theme.realmTitle}!`;
     }
